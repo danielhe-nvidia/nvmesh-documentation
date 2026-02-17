@@ -9,7 +9,6 @@ SPDX-License-Identifier: Apache-2.0
 - [​Copyright and Trademark Information](#copyright-and-trademark-information)
 - [​Preface](#preface)
 - [​Acronyms and Terms](#acronyms-and-terms)
-- [](#)
 - [Introduction to NVMesh Technology](#introduction-to-nvmesh-technology)
   - [Overview](#overview)
     - [Management](#management)
@@ -275,7 +274,6 @@ SPDX-License-Identifier: Apache-2.0
     - [Rename hostname](#rename-hostname)
     - [Upgrading NVMesh](#upgrading-nvmesh)
   - [Key Rotation / Certificate Renewal](#key-rotation--certificate-renewal)
-  - [](#-1)
 - [Configuration Limits](#configuration-limits)
 
 # ​Copyright and Trademark Information
@@ -309,8 +307,6 @@ We continually try to improve the quality and usefulness of documentation. If yo
 | RDMA IO | This is IO executed using RoCE or InfiniBand for communication. |
 | SIW | SoftiWarp, which provides an RDMA API, but performs communication over TCP without RDMA. <br>Often referred to as TCP in module parameter names. |
 | SIW IO | This is IO executed using SIW for communication, in contrast to RDMA IO. |
-
-#
 
 # Introduction to NVMesh Technology
 
@@ -3412,7 +3408,7 @@ It also contains a multitude of TOMA information.
 | --- | --- | --- |
 | **arnic_prefer** |  | Used to control a mechanism for defining NIC preference on a per drive basis. |
 | **clients** |  | This is a directory. It contains a sub-directory per client connected to this target with a single file, `qp_stats`, that provides statistics per qp. These may not be collected unless explicitly turned on. <br>The directory also has a `summary` file with a line per client that the GID with which it is connected to the target and the per-client processes running on this target, which can be useful for debugging CPU-hungry processes. |
-| **disk_info** |  | A high-level overview of the drives and NICs as seen by the target and used for reporting to management. The format is pipe (‘ | ’) separated. <br>Note: The same info appears in other PROCFS files in an easier to consume format. |
+| **disk_info** |  | A high-level overview of the drives and NICs as seen by the target and used for reporting to management. The format is pipe (‘ \| ’) separated. <br>Note: The same info appears in other PROCFS files in an easier to consume format. |
 | **disks** |  | Basic monitoring info and statistics per drive. |
 |  | **iostats.json** | See [Client and Target Drive Statistics](#client-and-target-drive-statistics). |
 |  | **nvme_qps** | Provides read and write counts per NVMe queue. |
@@ -4335,7 +4331,6 @@ For completeness, here are the main steps to be done in a non-managed upgrade ar
 
 **TBD: It is important to populate this section**
 
-##
 
 # Configuration Limits
 
