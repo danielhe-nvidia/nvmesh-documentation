@@ -274,6 +274,8 @@ SPDX-License-Identifier: Apache-2.0
     - [Rename hostname](#rename-hostname)
     - [Upgrading NVMesh](#upgrading-nvmesh)
   - [Key Rotation / Certificate Renewal](#key-rotation--certificate-renewal)
+  - [Target Cleanup](#target-cleanup)
+  - [Cluster Cleanup](#cluster-cleanup)
 - [Configuration Limits](#configuration-limits)
 
 # ​Copyright and Trademark Information
@@ -4331,6 +4333,26 @@ For completeness, here are the main steps to be done in a non-managed upgrade ar
 
 **TBD: It is important to populate this section**
 
+## Target Cleanup
+
+After deleting a target from a system, to insert it back into the system, it is imperative to first clean up its TOMA persistency. This is doing by removing the contents of the `/var/opt/nvmesh/toma` directory. The full procedure would be as follows:
+
+```bash
+systemctl stop nvmeshtarget
+rm -rf /var/opt/nvmesh/toma/*
+systemctl start nvmeshtarget
+```
+
+## Cluster Cleanup
+
+To clean up an entire cluster in order to "start over" performance the following operations:
+
+1. Stop all NVMesh components and Kafka brokers.
+2. Remove all TOMA persistencies, i.e., on all targets, as follows: `rm -rf /var/opt/nvmesh/toma/*`.
+3. Remove all cached client attachment information, i.e., on all clients, as follows: `rm -rf /var/opt/nvmesh/mcs/*`.
+4. On the Kafka brokers, remove current messages by removing all data in `/var/lib/kafka` except for `meta.properties` from that directory that is critical for restarting the brokers.
+5. Clear the Mongodb with a command such as the following from a management node: `mongosh mongodb://<MONGO-IP-ADDRESS>:27017/management --file /opt/nvmesh/management/clearDB.js`.
+6. Restart the components in the same order as when starting a new cluster.
 
 # Configuration Limits
 
