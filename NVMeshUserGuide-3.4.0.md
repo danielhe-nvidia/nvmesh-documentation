@@ -1400,7 +1400,7 @@ NVMesh implements its own mechanisms for multi-pathing, using multiple active QP
 
 It is recommended to connect NVMesh servers to two or more switches for high availability, whether using single or multi rail configurations.
 
-Multiple ports can be on the same subnet or separated. If multiple ports share a subnet, it is important to avoid ARP issues by setting arp_ignore to 1 and arp_announce to 2 for these interfaces in the kernel. One way of doing this would be to embed these lines into a file in `/etc/sysctl.d`, for instance `/etc/sysct l.d/90-lan-multipath.conf`, which would set this definition for all NICs in the server.
+Multiple ports can be on the same subnet or separated. If multiple ports share a subnet, it is important to avoid ARP issues by setting arp_ignore to 1 and arp_announce to 2 for these interfaces in the kernel. One way of doing this would be to embed these lines into a file in `/etc/sysctl.d`, for instance `/etc/sysctl.d/90-lan-multipath.conf`, which would set this definition for all NICs in the server.
 
 Conversely, when ports are on separate subnets, something like the following is recommended:
 
@@ -1576,7 +1576,7 @@ Success! Data written to: pki_int/intermediate/set-signed
 $ cat intermediate.crt nvmesh_root_ca.crt > ca_chain.crt
 ```
 
-5. The ca_chain.crt file will be distrbuted to the endpoints, along with the certificates generated in the next section.
+5. The ca_chain.crt file will be distributed to the endpoints, along with the certificates generated in the next section.
 
 #### Preparing Component Certificates
 
@@ -3329,7 +3329,7 @@ Monitoring information, largely debug information, can be found under multiple `
 
 - Root permissions may be needed.
 
-- Some items are write-only. Do not write into them without knowing what they do as there may be significant reprecussions.
+- Some items are write-only. Do not write into them without knowing what they do as there may be significant repercussions.
 
 - Each sub-directory represents an NVMesh module and has a version entry reporting module version information in a JSON format.
 
@@ -3713,7 +3713,7 @@ Tuned is distributed on RHEL-compatible and some Ubuntu distributions with pre-d
 tuned-adm profile latency-performance
 ```
 
-**To verify the current profil:e**
+**To verify the current profile:**
 
 ```
 [root@nvme80 12:32:32 root]# tuned-adm active
@@ -4197,7 +4197,7 @@ Any protected volumes that have space allocated on an evicted drive and no other
 - If the volume was defined using some combination of target classes and drive classes, rebuild space will be allocated from these classes, including space added to them after the original volume definition.
 - If the volume was allocated from specifically chosen drives, it may be necessary first to redefine the volume definition constraints.
 
-Once the rebuild process is invoked, NVMesh will begin to create data on the replacement capacity allocated, copying for mirrored volumes and reconstrucing for erasure-coded volumes.
+Once the rebuild process is invoked, NVMesh will begin to create data on the replacement capacity allocated, copying for mirrored volumes and reconstructing for erasure-coded volumes.
 
 New drives, whether as a replacement drive or in general, need to be formatted before they can be used. See [Format Drives](#format-drives) for more information.
 
@@ -4319,7 +4319,7 @@ Upgrading should be done through NVMesh-based managed non-disruptive upgrade.
 For completeness, here are the main steps to be done in a non-managed upgrade are:
 
 1. Install new RPMs.
-   1. Use `dnf/yum install <nvmesh-RPMs>` for RHEL-compataible OSes.
+   1. Use `dnf/yum install <nvmesh-RPMs>` for RHEL-compatible OSes.
    2. Use `dpkg -i <nvmesh-debs>` for Ubuntu.
 2. For continuous management functions, restart at least one management to the new version but not all, so that there is at least one management with the new version and one with the previous version. This is done with `systemctl restart nvmeshmgr`.
 3. Restart clients and targets. For non-disruptive (hot) upgrade, run `nvmesh_clnt_shutdown --upgrade` to notify the client about the hot upgrade and avoid stopping the block devices. Then run `systemctl restart nvmeshclient` to restart the client and target with the new version.
@@ -4419,7 +4419,7 @@ The following sections describe various system limits. Some of these may be appr
 | Name | 1024 Unicode characters |
 | Description | 1024 Unicode characters |
 
-The max segements limit applies to volumes that were allocated in one shot, and which are implemented as a single drive per volume segment. Otherwise, count the total number of segments in the volume. Each allocation or expansion of a volume will add the minimal number of segments.
+The max segments limit applies to volumes that were allocated in one shot, and which are implemented as a single drive per volume segment. Otherwise, count the total number of segments in the volume. Each allocation or expansion of a volume will add the minimal number of segments.
 
 See the following table for the one shot or minimum segments allocated to a volume.
 
