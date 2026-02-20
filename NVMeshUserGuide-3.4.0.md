@@ -1306,14 +1306,14 @@ NVMesh’s data path can be implemented on emulated RDMA, specifically SoftiWarp
 In general, it is simplest to install NVMesh with Linux firewalls disabled. However, it is ill-advised from a security perspective.
 
 | Domain | Source | Target | Source Port | Destination Port | Protocol |
-| :-: | :-: | :-: | :-: | :-: | :-: | --- | --- | --- |
+| :-: | :-: | :-: | :-: | :-: | :-: |
 | Mongo | Management | Mongo<sup>1</sup> | \* | 27017 | TCP |
 | Kafka | All NVMesh nodes | Kafka Broker<sup>1</sup> | \* | <nobr>9092-9093<sup>2</sup></nobr> | TCP |
 | GUI | \* | Management | \* | 40003 | TCP |
 | REST | \* | Management | \* | 40013 | TCP |
 | Data Path | Clients | Targets | \* | 4791 | UDP (RoCE) |
 | Data Path | Clients | Targets | NR | NR | InfiniBand |
-| Data Path | Clients | Targets | <nobr>7915-7930<sup>4</sup></nobr> <br> 8915<sup>5</sup> | <nobr>7915-7930<sup>4</sup></nobr> <br>8915<sup>5</sup> | TCP (SIW) |  |  |  |
+| Data Path | Clients | Targets | <nobr>7915-7930<sup>4</sup></nobr> <br> 8915<sup>5</sup> | <nobr>7915-7930<sup>4</sup></nobr> <br>8915<sup>5</sup> | TCP (SIW) |
 | TOMA | Targets | Targets | \* | 4791 | UDP (RoCE) |
 | TOMA | Targets | Targets | NR | NR | InfiniBand |
 | TOMA | Targets | Targets | \* | 4100 | UDP<sup>6</sup> |
