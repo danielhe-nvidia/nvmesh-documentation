@@ -4277,7 +4277,7 @@ Uninstall NVMesh Software. Prior to the uninstallation of NVMesh software, stop 
 When the IP address associated with a management is modified, it will refuse to start and an error message like the following will be logged in `/var/log/messages` or `/var/log/syslog`, depending on operating system distribution:
 
 ```
-Sep 5 14:35:44 nvmestorage nvmeshmgr[11107]: WARNING: Unable to verify manageme ntId, sleeping for 10 seconds
+Sep 5 14:35:44 nvmestorage nvmeshmgr[11107]: WARNING: Unable to verify managementId, sleeping for 10 seconds
 ```
 
 To update the management server ID, create the file that indicates to the management that it should update its ID.
