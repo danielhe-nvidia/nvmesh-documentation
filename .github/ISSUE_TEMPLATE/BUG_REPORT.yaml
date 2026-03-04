@@ -1,14 +1,15 @@
-# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES.
+# All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
-
+---
 name: NVMesh Documentation Issue
 description: Report an NVMesh documentation issue
 title: "[Issue]: "
 labels:
   - "bug"
 body:
-   - type: markdown
-     attributes:
+  - type: markdown
+    attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
 
@@ -21,7 +22,7 @@ body:
     validations:
       required: true
 
- - type: markdown
+  - type: markdown
     attributes:
       value: |
         # NVMesh Documentation Issue Report
