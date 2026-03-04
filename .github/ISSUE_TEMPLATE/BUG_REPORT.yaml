@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+name: NVMesh Documentation Issue
+description: Report an NVMesh documentation issue
+title: "[Issue]: "
+labels:
+  - "bug"
+body:
+   - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of NVMesh are you running?
+      placeholder: "example: 3.4.0"
+    validations:
+      required: true
+
+ - type: markdown
+    attributes:
+      value: |
+        # NVMesh Documentation Issue Report
+        Please provide the following information to report an NVMesh documentation issue.
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 1. Issue Overview
+
+  - type: input
+    id: issue-title
+    attributes:
+      label: Title
+      description: Concise, descriptive summary of the reported issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-summary
+    attributes:
+      label: Summary
+      description: Detailed account of the problem
+      placeholder: Enter detailed summary here...
+    validations:
+      required: true
+
+  - type: input
+    id: severity
+    attributes:
+      label: Severity (0-2)
+      description: Classification of the issue's impact on end-users. 0=Incorrect. 1=Imprecise. 2=Minor.
+      placeholder: e.g., 1
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow NVMesh's Code of Conduct
+          required: true
+        - label: I have searched the open bugs and have found no duplicates for this bug report
+          required: true
