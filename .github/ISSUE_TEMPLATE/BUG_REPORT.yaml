@@ -8,7 +8,7 @@ labels:
   - "bug"
 body:
    - type: markdown
-    attributes:
+     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
 
