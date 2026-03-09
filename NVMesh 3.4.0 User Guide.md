@@ -4,6 +4,7 @@
 SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 -->
+[![Release](https://img.shields.io/badge/Release-v3.4-brightgreen)](./ROADMAP.md)
 
 - [NVMesh 3.4.0 User Guide](#nvmesh-340-user-guide)
 - [Copyright and Trademark Information](#copyright-and-trademark-information)
@@ -1232,7 +1233,7 @@ Non-NVMesh package dependencies for Red Hat Enterprise Linux (RHEL) 8.x and comp
 | ------------- | ------------------------------------------------------ |
 | nvmesh-base   | ethtool <br> smartmontools <br> util-linux             |
 | nvmesh-client | nvmesh-base <br> xz                                    |
-| nvmesh-target | nvmesh-client + <br> librdkafka >= 1.6.1 <br> pciutils |
+| nvmesh-target | nvmesh-client + <br> 2.6.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
 
 For RDMA environments, on service startup, the following packages are required:
 
@@ -1250,7 +1251,7 @@ Non-NVMesh package dependencies for the Ubuntu 22.04 distribution are presented 
 | ------------- | ----------------------------------------------------- |
 | nvmesh-base   | ethtool <br> smartmontools <br> util-linux            |
 | nvmesh-client | nvmesh-base <br> xz-utils                             |
-| nvmesh-target | nvmesh-client <br> librdkafka1 >= 1.6.1 <br> pciutils |
+| nvmesh-target | nvmesh-client <br> 2.6.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
 
 In addition, for RDMA environments, on service startup, the following are required:
 
