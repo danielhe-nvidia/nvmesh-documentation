@@ -6,9 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 - [NVMesh 3.4.0 User Guide](#nvmesh-340-user-guide)
-- [​Copyright and Trademark Information](#copyright-and-trademark-information)
-- [​Preface](#preface)
-- [​Acronyms and Terms](#acronyms-and-terms)
+- [Copyright and Trademark Information](#copyright-and-trademark-information)
+- [Preface](#preface)
+- [Acronyms and Terms](#acronyms-and-terms)
 - [Introduction to NVMesh Technology](#introduction-to-nvmesh-technology)
   - [Overview](#overview)
     - [Management](#management)
@@ -278,7 +278,7 @@ SPDX-License-Identifier: Apache-2.0
   - [Cluster Cleanup](#cluster-cleanup)
 - [Configuration Limits](#configuration-limits)
 
-# ​Copyright and Trademark Information
+# Copyright and Trademark Information
 
 © 2026 NVIDIA All rights reserved.
 
@@ -288,7 +288,7 @@ NVMesh® is a registered trademark of NVIDIA.
 
 All other brands or products are trademarks or registered trademarks of their respective holders and should be treated as such.
 
-# ​Preface
+# Preface
 
 Whenever instructions are given to perform an action via the GUI, there is an alternative option to perform it using the RESTful API and for almost all actions via the CLI. For brevity, the instructions are only specific for the GUI in many cases.
 
@@ -300,7 +300,7 @@ The primary audience for this document is intended to be storage and/or applicat
 
 We continually try to improve the quality and usefulness of documentation. If you have any corrections, feedback, or requests for additional documentation, send an e-mail message to <nvmesh-documentation@nvidia.com>.
 
-# ​Acronyms and Terms
+# Acronyms and Terms
 
 | Acronym | Description |
 | --- | --- |
