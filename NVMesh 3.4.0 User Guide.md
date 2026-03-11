@@ -2576,7 +2576,7 @@ The following parameters are used for setting logging levels.
 - MCS_LOGGING_LEVEL
 - AGENT_LOGGING_LEVEL
 
-The following parameter is in development and should be an experimental non-supported feature:
+The following parameter is in development and should be considered an experimental non-supported feature:
 
 - NVMESH_MODE
 
