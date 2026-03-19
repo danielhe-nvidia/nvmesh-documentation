@@ -1040,31 +1040,31 @@ These instructions assume familiarity on the part of the administrator with task
 
    1. Install Kafka.
 
-   1. Install the `nvmesh-management` package.
+   1. Install the `nvmesh-management` and `nvmesh-interopdb` packages.
 
-   1. Configure specific management options in `/etc/opt/nvmesh/management.js.conf`.
+   2. Configure specific management options in `/etc/nvmesh/management.js.conf`.
 
-   1. Start the `nvmeshmgr` service.
+   3. Start the `nvmeshmgr` service.
 
-   1. (Optional) Set up a management HA cluster, i.e., set up multiple management servers. For more information refer to [Management Scalability](#management-scalability).
+   4. (Optional) Set up a management HA cluster, i.e., set up multiple management servers. For more information refer to [Management Scalability](#management-scalability).
 
-1. Set up the clients and targets:
-   1. For clients, install the `nvmesh-base and nvmesh-client` packages.
+2. Set up the clients and targets:
+   1. For clients, install the `nvmesh-base`, `nvmesh-client` and `nvmesh-upgrader` packages.
 
-   1. For targets, install the `nvmesh-target` package also.
+   2. For targets, install the `nvmesh-target` package also.
 
-   1. Define the management servers’ addresses (Kafka and REST) and the NICs to use in `/etc/nvmesh/nvmesh.conf`.
+   3. Define the management servers’ addresses (Kafka and REST) and the NICs to use in `/etc/nvmesh/nvmesh.conf`.
       1. Optionally, configure TCP/IP Support.
 
-   1. On targets:
+   4. On targets:
       1. As needed, exclude any NVMe drives that should not be used by NVMesh, see [Exclude Drives](#exclude-drives).
 
       2. Enable and start the `nvmeshtarget` service, which will also start the client.
 
-   1. On clients that are not targets:
+   5. On clients that are not targets:
       1. Start the `nvmeshclient` service.
 
-1. Define volumes:
+3. Define volumes:
    1. Log in via a web browser.
 
    2. If this is the first login to the Management, perform the following 2 steps:
