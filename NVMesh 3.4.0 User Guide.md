@@ -438,12 +438,14 @@ NVMesh comprises the following software packages in the form of rpm files or deb
 
 | Package Name | Description |
 | --- | --- |
-| nvmesh-base | nvmesh-base provides the basic NVMesh software directories and shared components, such as the management agent, MCS and tracing facilities, required for the system to function. |
-| nvmesh-client | nvmesh-client provides the client software. |
-| nvmesh-target | nvmesh-target provides the target software including TOMA. |
-| nvmesh-utils | nvmesh-utils provides a set of utilities often required for NVMesh, such as: <ul><li>nvmesh - The NVMesh CLI, see the NVMesh CLI Guide for details.</li><li>nvmesh_logs_collector - a utility for collecting system-wide information for support to diagnose system issues.</li></ul> |
-| nvmesh-management | nvmesh-management provides the management server software. |
-| nvmesh-monitor | nvmesh-monitor provides Prometheus plugins. |
+| `nvmesh-base` | `nvmesh-base` provides the basic NVMesh software directories and shared components, such as the management agent, MCS and tracing facilities, required for the system to function. |
+| `nvmesh-client` | `nvmesh-client` provides the client software. |
+| `nvmesh-target` | `nvmesh-target` provides the target software including TOMA. |
+| `nvmesh-utils` | `nvmesh-utils` provides a set of utilities often required for NVMesh, such as: <ul><li>`nvmesh` - The NVMesh CLI, see the NVMesh CLI Guide for details.</li><li>`nvmesh_logs_collector` - a utility for collecting system-wide information for support to diagnose system issues.</li></ul> |
+| `nvmesh-management` | `nvmesh-management` provides the management server software. |
+| `nvmesh-monitor` | `nvmesh-monitor` provides Prometheus plugins. |
+| `nvmesh-interopdb` | `nvmesh-interopdb` provides interoperability information required by the management server for managed non-disruptive upgrades. |
+| `nvmesh-upgrader` | `nvmesh-upgrader` provides the upgrade agent that handles system upgrades and maintenance operations. |
 
 Package dependencies are shown in the following diagram:
 
