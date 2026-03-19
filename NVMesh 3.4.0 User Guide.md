@@ -4,6 +4,7 @@
 SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 -->
+
 [![Release](https://img.shields.io/badge/Release-v3.4-brightgreen)](./ROADMAP.md)
 
 - [NVMesh 3.4.0 User Guide](#nvmesh-340-user-guide)
@@ -449,8 +450,28 @@ NVMesh comprises the following software packages in the form of rpm files or deb
 
 Package dependencies are shown in the following diagram:
 
-<div align="center"><img src="./ug-media/image38.png" style="width:6.5in;height:4.375in"
-alt="Software package dependencies." /></div>
+```mermaid
+flowchart TB
+    classDef nvidiaGreen fill:#76b900,stroke:#2d5c1f,color:#fff
+
+    direction LR
+    nvmesh-utils
+    nvmesh-monitor
+    nvmesh-upgrader
+    nvmesh-interopdb
+
+    nvmesh-base
+    nvmesh-management
+    nvmesh-client
+    nvmesh-target
+
+    nvmesh-utils --> nvmesh-base
+    nvmesh-utils --> nvmesh-management
+    nvmesh-base --> nvmesh-client
+    nvmesh-client --> nvmesh-target
+
+    class nvmesh-utils,nvmesh-monitor,nvmesh-upgrader,nvmesh-interopdb,nvmesh-base,nvmesh-management,nvmesh-client,nvmesh-target nvidiaGreen
+```
 
 ## Deployment Layout
 
@@ -1231,10 +1252,10 @@ This version of NVMesh is compatible with NodeJS version 18.
 
 Non-NVMesh package dependencies for Red Hat Enterprise Linux (RHEL) 8.x and compatible distributions like Rocky Linux are presented in the following table.
 
-| Package       | Dependencies                                           |
-| ------------- | ------------------------------------------------------ |
-| nvmesh-base   | ethtool <br> smartmontools <br> util-linux             |
-| nvmesh-client | nvmesh-base <br> xz                                    |
+| Package | Dependencies |
+| --- | --- |
+| nvmesh-base | ethtool <br> smartmontools <br> util-linux |
+| nvmesh-client | nvmesh-base <br> xz |
 | nvmesh-target | nvmesh-client + <br> 2.6.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
 
 For RDMA environments, on service startup, the following packages are required:
@@ -1249,10 +1270,10 @@ For RDMA environments, on service startup, the following packages are required:
 
 Non-NVMesh package dependencies for the Ubuntu 22.04 distribution are presented in the following table:
 
-| Package       | Dependencies                                          |
-| ------------- | ----------------------------------------------------- |
-| nvmesh-base   | ethtool <br> smartmontools <br> util-linux            |
-| nvmesh-client | nvmesh-base <br> xz-utils                             |
+| Package | Dependencies |
+| --- | --- |
+| nvmesh-base | ethtool <br> smartmontools <br> util-linux |
+| nvmesh-client | nvmesh-base <br> xz-utils |
 | nvmesh-target | nvmesh-client <br> 2.6.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
 
 In addition, for RDMA environments, on service startup, the following are required:
