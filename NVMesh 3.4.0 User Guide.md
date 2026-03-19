@@ -102,7 +102,7 @@ SPDX-License-Identifier: Apache-2.0
     - [Kafka Access](#kafka-access)
     - [NTP Time Synchronization](#ntp-time-synchronization)
   - [Network Configuration](#network-configuration)
-    - [RoCEv2 Multipathing](#rocev2-multipathing)
+    - [RoCEv2 Multi-pathing](#rocev2-multi-pathing)
     - [SoftiWarp / TCP-IP](#softiwarp--tcp-ip)
   - [Software Delivery](#software-delivery)
     - [NVMesh Packages](#nvmesh-packages)
@@ -999,7 +999,7 @@ The performance impact of enabling the feature is as follows:
 
 - Erasure-coded RAID-6 volumes: There is no overhead for write operations. For read operations, the relative impact will be more significant for large IOs.
 
-In the current implementation, overall performance for CRC verification and generation is dependent on the speed of the kernel’s CRC calculation. For most cases, this is directly related to the AVX capabilities of the processors running on the client nodes. For a single 4k I/O, the latency overhead is typically around one microsecond. For high throughputs, there may be a more significant effect that is hardware dependent. For example, on a system with dual Xeon Silver CPUs of 16 cores each, the CRC check reduced performance from 40 GB/s to 30 GB/s.
+In the current implementation, overall performance for CRC verification and generation is dependent on the speed of the kernel’s CRC calculation. For most cases, this is directly related to the AVX capabilities of the processors running on the client nodes. For a single 4k I/O, the latency overhead is typically around one microsecond. For high throughput, there may be a more significant effect that is hardware dependent. For example, on a system with dual Xeon Silver CPUs of 16 cores each, the CRC check reduced performance from 40 GB/s to 30 GB/s.
 
 **<u>Note:</u>** It is recommended to test the overhead on specific hardware for precise overhead estimations.
 
@@ -1042,13 +1042,13 @@ These instructions assume familiarity on the part of the administrator with task
 
    1. Install the `nvmesh-management` and `nvmesh-interopdb` packages.
 
-   2. Configure specific management options in `/etc/nvmesh/management.js.conf`.
+   1. Configure specific management options in `/etc/nvmesh/management.js.conf`.
 
-   3. Start the `nvmeshmgr` service.
+   1. Start the `nvmeshmgr` service.
 
-   4. (Optional) Set up a management HA cluster, i.e., set up multiple management servers. For more information refer to [Management Scalability](#management-scalability).
+   1. (Optional) Set up a management HA cluster, i.e., set up multiple management servers. For more information refer to [Management Scalability](#management-scalability).
 
-2. Set up the clients and targets:
+1. Set up the clients and targets:
    1. For clients, install the `nvmesh-base`, `nvmesh-client` and `nvmesh-upgrader` packages.
 
    2. For targets, install the `nvmesh-target` package also.
@@ -1064,7 +1064,7 @@ These instructions assume familiarity on the part of the administrator with task
    5. On clients that are not targets:
       1. Start the `nvmeshclient` service.
 
-3. Define volumes:
+1. Define volumes:
    1. Log in via a web browser.
 
    2. If this is the first login to the Management, perform the following 2 steps:
@@ -1116,7 +1116,7 @@ Following is an example:
 
 ```
 [root@nvme1076 18:03:32 ~]# grep -e Serial -e Queue /proc/nvmeibs/smart[0-2]
-/proc/nvmeibs/smart0:Serial Number=BTLJ91040FA71P0FGN
+/proc/nvmeibs/smart0:Serial Number=BATS91040FA71P0FGN
 /proc/nvmeibs/smart0:Submission Queues=128
 /proc/nvmeibs/smart0:Completion Queues=128
 /proc/nvmeibs/smart1:Serial Number=S4C9NA0M400300
@@ -1418,7 +1418,7 @@ For explicit instructions for RDMA network setup, use general NVIDIA RDMA setup 
 
 In general, jumbo frames are recommended. For RoCE, an MTU of 4200 is often recommended.
 
-### RoCEv2 Multipathing
+### RoCEv2 Multi-pathing
 
 NVMesh implements its own mechanisms for multi-pathing, using multiple active QPs, across different paths, and continuous path discovery to maintain awareness of network errors and ensure data delivery. Bonding and LAG configurations are currently not supported by NVMesh. DOCA virtualization facilities can also be used.
 
@@ -2397,7 +2397,7 @@ brw-rw---- 1 root disk 252, 256 Jul 6 17:24 /dev/nvmesh/BigVolume
 To verify minimal block device functionality and attributes, use fdisk, as follows:
 
 ```
-[root@nvme1034 17:28:06 yaniv]# fdisk -l /dev/nvmesh/BigVolume
+[root@nvme1034 17:28:06 ~]# fdisk -l /dev/nvmesh/BigVolume
 Disk /dev/nvmesh/BigVolume: 372.5 GiB, 399999238144 bytes, 97656064 sectors
 Units: sectors of 1 * 4096 = 4096 bytes
 Sector size (logical/physical): 4096 bytes / 4096 bytes
@@ -2778,7 +2778,7 @@ Volumes can be attached to or detached from clients using the GUI.
    1. Preempt other clients on attach – this flag is relevant if the requested attachment contradicts the way the current clients are attached.
       1. If preempt is not set, the attachment will fail.
       1. If preempt is set, the attachment will succeed, and the other clients with the previous volume reservation mode will have I/O disabled for this volume.
-   1. Detach Other Clients – this flag provides the option to detach this volume from all other clients while attaching to this client. It can be used with or without explicit pre-emption.
+   1. Detach Other Clients – this flag provides the option to detach this volume from all other clients while attaching to this client. It can be used with or without explicit preemption.
    1. Reference IDs are used to allow safely attaching the same volume multiple times for multiple K8s containers from different K8s namespaces.
       1. See this [link](https://gitlab-master.nvidia.com/excelero/nvmesh-csi-driver/-/blob/master/docs/src/usage/cross-namespace-volumes.md) (**TBD: make this publicly available.**) for more information.
       1. Setting the reference ID via the GUI will save this information for the current attach or detach operation.
@@ -3014,7 +3014,7 @@ The following tables describes the options, including defaults and possible valu
 
 | Option Name | Description | Default Value | Possible Values |
 | --- | --- | --- | --- |
-| config.ipIdentificationStrategy | The IP identification or resolution strategy determines how management will choose which IP to listen on. | "FirstInterface" | • Manual - Use the forceIP configuration, which subsequently must be set when using this strategy. <br><br> • FQDN - Resolve via the system hostname. <br><br> • FirstInterfaceDefault - Use the default route interface. <br><br> • SpecificInterface - Use a named interface, which requires setting the specificInterfaceName configuation. <br><br> • FirstInterface - Use the first available interface (default). This is the same behavior as older system versions before this option was introduced. |
+| config.ipIdentificationStrategy | The IP identification or resolution strategy determines how management will choose which IP to listen on. | "FirstInterface" | • Manual - Use the forceIP configuration, which subsequently must be set when using this strategy. <br><br> • FQDN - Resolve via the system hostname. <br><br> • FirstInterfaceDefault - Use the default route interface. <br><br> • SpecificInterface - Use a named interface, which requires setting the specificInterfaceName configuration. <br><br> • FirstInterface - Use the first available interface (default). This is the same behavior as older system versions before this option was introduced. |
 | config.port | The TCP port management uses for HTTP communication with GUI clients. | 4000 | Any valid TCP port number, typically above 1024. |
 | config.useSSL | Determines whether HTTP communication to the management server is encrypted via SSL. | false | true or false |
 | config.webSocketServerPort | The TCP port management uses for dynamic updates from clients and targets. | 4001 | Any valid TCP port number, typically above 1024. |
@@ -3549,7 +3549,7 @@ Logs sent to binary tracing of levels `INFO`, `WARNING` or `ERROR` are also sent
 
 All binary traces are kept in memory and occasionally dumped to persistent storage. By default, more granular logs of lower severity than info-level logs, often called "trace-level logs" are also stored using this mechanism.
 
-The following module params control tracing levels related to code within that module. Each trace is controlled by a single module parameter. See [NVMesh Module Params](https://nvidia-my.sharepoint.com/:w:/p/yaniv/EUAex7O6SxhMq-87XXNOBz8ByNZiKjYGkF3ItVX_jfMu5w?e=aXPLjg) for more details. Traces with a severity level higher than the relevant module param will not be emitted to the tracer.
+The following module params control tracing levels related to code within that module. Each trace is controlled by a single module parameter. See [NVMesh Module Params](https://github.com/NVIDIA/nvmesh-documentation/blob/3.4.0/NVMesh%203.4.0%20Module%20Params.md) for more details. Traces with a severity level higher than the relevant module param will not be emitted to the tracer.
 
 | Module | Parameter | Comments |
 | --- | --- | --- |
@@ -3649,7 +3649,7 @@ The OS-native IRQ Balancer service alone can often be sufficient.
 You can verify the service is running with the systemctl command as follows:
 
 ```
-root@nvme80 11:54:07 yaniv]# systemctl status irqbalance
+root@nvme80 11:54:07 ~]# systemctl status irqbalance
 ● irqbalance.service - irqbalance daemon
    Loaded: loaded (/usr/lib/systemd/system/irqbalance.service; enabled; vendor preset: enabled)
    Active: active (running) since Thu 2025-09-18 09:51:54 IDT; 1 weeks 0 days ago
@@ -4087,7 +4087,7 @@ As AMD EPYC CPUs have multiple NUMAs per socket, interrupt management, which typ
 
 #### NVMe drives
 
-For the NVMe drives, it is recommended to use one of the following two options for interrupt management via the `/etc/envmesh.conf` file.
+For the NVMe drives, it is recommended to use one of the following two options for interrupt management via the `/etc/nvmesh.conf` file.
 
 1. Set the number of queues in use from each NVMe drive to be that of a physical processor, or as high as possible if there are not enough queues. Then, set `ASSIGN_NVME_IRQS="persocket"` in `/etc/nvmesh/nvmesh.conf`.
 
@@ -4301,7 +4301,7 @@ Uninstall NVMesh Software. Prior to the uninstallation of NVMesh software, stop 
 When the IP address associated with a management is modified, it will refuse to start and an error message like the following will be logged in `/var/log/messages` or `/var/log/syslog`, depending on operating system distribution:
 
 ```
-Sep 5 14:35:44 nvmestorage nvmeshmgr[11107]: WARNING: Unable to verify managementId, sleeping for 10 seconds
+Sep 5 14:35:44 nvme1storage nvmeshmgr[11107]: WARNING: Unable to verify managementId, sleeping for 10 seconds
 ```
 
 To update the management server ID, create the file that indicates to the management that it should update its ID.
