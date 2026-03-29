@@ -16,7 +16,7 @@ A generally available version is expected mid-March 2026.
 
 ## NVMesh 3.5
 
-The current planned features for NVMesh 3.5.0 are:
+The current planned features for NVMesh 3.5 are:
 
 * Introduction of 3-way mirroring for RAID-10, i.e., striped and mirrored volumes.
   
@@ -36,6 +36,10 @@ This version is expected late 2026.
 
 ## NVMesh 4.1
 
-NVMesh 4.1 will enhance the user-mode version to include TCP / SoftiWarp support bringing it to feature parity with the kernel version.
+The current planned features for NVMesh 4.1 are:
+
+* User-mode version will include TCP / SoftiWarp support bringing it to feature parity with the kernel version.
+
+* Support for drives larger than 32 TB.
 
 This version is expected early 2027.
