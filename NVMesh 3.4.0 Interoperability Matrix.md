@@ -57,11 +57,11 @@ The drives are listed by manufacturer in alphabetical order.
 | Kioxia | CD8 | No | E3.S |  |
 | Micron | 6500 ION | Yes | U.3, E1.L | Thin firmware variant; FIPS+SED SKU validated with production firmware, non-FIPS/non-SED also validated in QA context. |
 | Micron | 7100 Series | No | U.2, AIC |  |
-| Micron | 7300 Series | No | U.2, M.2 |  |
-| Micron | 7400 Series | No | U.3, M.2, E1.S |  |
+| Micron | 7300 Series | No | U.2, M.2 | Requires NVMesh to reset the drive after formatting it. |
+| Micron | 7400 Series | No | U.3, M.2, E1.S | Requires NVMesh to reset the drive after formatting it. |
 | Micron | 9100 Series | No | U.2, AIC |  |
 | Micron | 9200 Series | No | U.2 |  |
-| Micron | 9300 Series | No | U.2 |  |
+| Micron | 9300 Series | No | U.2 | Requires NVMesh to reset the drive after formatting it. |
 | Netlist | N1951 Series | Yes | U.2, AIC |  |
 | Netlist | N1962 Series | Yes | U.2 |  |
 | Phison | EPW5970 (X1) | Yes | U.2 |  |
