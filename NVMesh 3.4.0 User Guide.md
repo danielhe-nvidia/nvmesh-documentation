@@ -105,8 +105,11 @@ SPDX-License-Identifier: Apache-2.0
     - [RoCEv2 Multi-pathing](#rocev2-multi-pathing)
     - [SoftiWarp / TCP-IP](#softiwarp--tcp-ip)
     - [TCP performance tuning](#tcp-performance-tuning)
+      - [`nvmesh.conf` and the TCP affinity script](#nvmeshconf-and-the-tcp-affinity-script)
       - [Flow steering, RSS, and multi-port listeners](#flow-steering-rss-and-multi-port-listeners)
       - [Latency versus throughput](#latency-versus-throughput)
+      - [NVMesh common module parameter: `cq_vec_flags_tcp`](#nvmesh-common-module-parameter-cq_vec_flags_tcp)
+      - [Configuration-oriented recommendations](#configuration-oriented-recommendations)
   - [Software Delivery](#software-delivery)
     - [NVMesh Packages](#nvmesh-packages)
     - [Software Delivery for Red Hat Distributions](#software-delivery-for-red-hat-distributions)
@@ -278,6 +281,7 @@ SPDX-License-Identifier: Apache-2.0
     - [Reset factory defaults](#reset-factory-defaults)
     - [Rename hostname](#rename-hostname)
     - [Upgrading NVMesh](#upgrading-nvmesh)
+    - [Altering the per-Client Journal Space](#altering-the-per-client-journal-space)
   - [Key Rotation / Certificate Renewal](#key-rotation--certificate-renewal)
   - [Target Cleanup](#target-cleanup)
   - [Cluster Cleanup](#cluster-cleanup)
@@ -1522,7 +1526,7 @@ These are **starting points**, not universal rules—always measure with represe
   You can often increase **`TCP_NUM_RX_QUEUE`** and **`TCP_NUM_CHANNELS`** (within NIC and driver limits) so traffic and completions spread across more queues and CPUs. Prefer a **NUMA-aware** **`TCP_RX_CPU_AFFINITY_DOMAIN`** (for example `pernuma` or an explicit list of CPUs local to the NIC) to avoid remote-memory access. For receive-side spreading, see [Flow steering, RSS, and multi-port listeners](#flow-steering-rss-and-multi-port-listeners): default **`TCP_FLOW_STEER`** relies on **RSS** and multi-port listeners; **`TCP_FLOW_STEER="ntuple"`** can improve steering when your hardware supports it. Consider **`TCP_RPS_MODE`** as well; incorrect combinations can hurt latency, so change one dimension at a time.
 
 - **Small number of cores**  
-  Use **fewer RX queues** and **lower channel counts** so you do not spread work across more CPUs than exist or starve application threads. **`persocket`** or a **short explicit CPU list** for **`TCP_RX_CPU_AFFINITY_DOMAIN`** is often appropriate. On **clients**, you can cap TCP channel usage with the **`nvmeibc`** module parameters **`nr_max_channels_per_path_tcp`** (maximum IO channels per path for TCP) and **`max_lock_channels_tcp`** (maximum lock channels per disk for TCP, including secondary channels). Lower values reduce connection and locking parallelism—appropriate when core count is low. See [Module Parameters](#module-parameters). If hyperthreads contend on the same physical core, consider pinning workloads or reducing parallelism so pairs of hyperthreads are not saturated by competing work. Avoid aggressive RPS unless you have verified IRQ load.
+  Use **fewer RX queues** and **lower channel counts** so you do not spread work across more CPUs than exist or starve application threads. **`persocket`** or a **short explicit CPU list** for **`TCP_RX_CPU_AFFINITY_DOMAIN`** is often appropriate. On **clients**, you can cap TCP channel usage with the **`nvmeibc`** module parameters **`nr_max_channels_per_path_tcp`** (maximum IO channels per path for TCP) and **`max_lock_channels_tcp`** (maximum lock channels per disk for TCP, including secondary channels). Lower values reduce connection and locking parallelism—appropriate when core count is low. See [Module Parameters](#module-parameters). If hyper-threads contend on the same physical core, consider pinning workloads or reducing parallelism so pairs of hyper-threads are not saturated by competing work. Avoid aggressive RPS unless you have verified IRQ load.
 
 - **One NIC per NUMA node (multi-NIC)**  
   Treat each NIC as a **separate NUMA domain**: use **`pernuma`** (or per-device CPU lists) so each interface’s steering stays on the local socket.
@@ -4438,6 +4442,25 @@ For completeness, here are the main steps to be done in a non-managed upgrade ar
 **<u>Note:</u>** After upgrading a management instance, if changes had been made to `/etc/nvmesh/management.js.conf`, a new file named `/etc/nvmesh/management.js.conf.rpmnew` may be created. This file will include new fields that are critical for the proper function of management. Therefore, compare the contents of the two files and ensure that the new fields exist also in `/etc/nvmesh/management.js.conf` to ensure proper function. Alternatively, replace `/etc/nvmesh/management.js.conf` with `/etc/nvmesh/management.js.conf.rpmnew` and reinsert any adjustments made.
 
 **<u>Note:</u>** Managed non-disruptive upgrade has not been integrated yet with Kubernetes environments.
+
+### Altering the per-Client Journal Space
+
+Targets allocate a fixed amount of journal space per client per EC-capable drive. As the total journal size per drive is fixed, this determines the maximum number of clients that can connect to the drive and limits the amount of outstanding IO to that drive. An administrator may want to increase the amount of journal space per client per drive to allow more parallel IO, potentially increasing per-client performance. An administrator may want to decrease the amount of journal space per client per drive to enable more clients to connect to the same drive.
+
+The fixed amount of journal space per client per EC-capable drive is governed by the `nvmeibs_jrange_num_blocks` module parameter for the `nvmeibs` module.
+
+This setting is per target, but it is recommended to alter it across the entire cluster.
+
+The procedure for altering the setting is as follows:
+
+1. Detach all volumes with segments on the drives on the target from all clients. If updating the entire cluster, detach all volumes from all clients.
+   1. It may be sufficient to do a detach for hot-upgrade, but this has not been tested.
+2. Confirm that no journals are in use as allocations are kept across target reboots and an allocation of a different size on reboot will prevent target startup. To confirm, ensure that the `/proc/nvmeibs/serjio/<DRIVE-ID>/ranges.csv` files have no reserved ranges except for the quarantined ranges, 0, 1 and 2.
+3. Shutdown clients and targets.
+   1. It may be sufficient to stop only the targets, but this has not been tested.
+4. Modify `nvmeibs_jrange_num_blocks` to the new value.
+5. Restart the NVMesh components stopped in step 3.
+6. Re-attach the volumes detached in step 1.
 
 ## Key Rotation / Certificate Renewal
 
