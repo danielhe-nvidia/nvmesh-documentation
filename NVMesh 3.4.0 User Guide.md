@@ -1195,7 +1195,7 @@ For a more elaborate calculation, see the [NVMesh Memory Calculator](https://doc
 
 #### Supported NVMe Devices
 
-Drives not explicitly listed in the [NVMesh NVMe Drive Interoperability Matrix](https://confluence.nvidia.com/display/NSV/NVMe+Devices) **(TBD: provide an external link)** have not been tested and may not function correctly. A new model that is a newer version in a family of drives that have been tested is highly likely to function properly.
+Drives not explicitly listed in the [NVMesh 3.4.0 Interoperability Matrix - Drive Interoperability](https://github.com/NVIDIA/nvmesh-documentation/blob/3.4.0/NVMesh%203.4.0%20Interoperability%20Matrix.md#drive-interoperability) have not been tested and may not function correctly. A new model that is a newer version in a family of drives that have been tested is highly likely to function properly.
 
 #### Drive Sector Size
 
@@ -1294,11 +1294,11 @@ In addition, for RDMA environments, on service startup, the following are requir
 
 #### Operating System
 
-Supported operating system versions and the associated kernels can be found in the [NVMesh Support Matrix](https://confluence.nvidia.com/display/NSV/NVMesh+Support+Matrix) (<b>TBD: make a public version of this</b>).
+Supported operating system versions and the associated kernels can be found in the [NVMesh 3.4.0 Interoperability Matrix - Operating System Interoperability](https://github.com/NVIDIA/nvmesh-documentation/blob/3.4.0/NVMesh%203.4.0%20Interoperability%20Matrix.md#operating-system-interoperability).
 
 #### NVIDIA (Mellanox) OFED
 
-For some environments, it is desired to install the NVIDIA (Mellanox) OFED software. Consult OFED documentation for current instructions. The [NVMesh Support Matrix](https://confluence.nvidia.com/display/NSV/NVMesh+Support+Matrix) (<b>TBD: make a public version of this</b>) presents which versions are supported in combination with certain operating systems and kernels.
+For some environments, it is desired to install the NVIDIA (Mellanox) OFED software. OFED is generally supported, although adaptations may need to be made for newer versions.
 
 It is not imperative to used OFED.
 
