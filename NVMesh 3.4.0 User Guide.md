@@ -3060,10 +3060,10 @@ The following tables defines the TOMA configuration parameters defined using `to
 | raft_min_election_timeout_factor | Defines how many times a heartbeat is missed by a follower for it to invoke a new leader election. This setting combined with the heartbeat timeout itself contribute to defining failover times when a leader stops unexpectedly. |
 | max_n_simultaneous_dirty_rebuild | Defines the number of simultaneous dirty bit rebuilds that can be run. <br>Lowering this parameter will not stop currently running rebuilds. |
 | max_n_simultaneous_stale_and_txid_rebuild | Defines the number of simultaneous rebuilds used for cleared stale locks and performing transaction ID rebuilds. |
-| max_n_simultaneous_scrubbing | Future – scrubbing functionality governance. |
-| scrubbing_default_period_days | Future – scrubbing functionality governance. |
-| scrubbing_n_blksets_per_iteration | Future – scrubbing functionality governance. |
-| scrubbing | Future – scrubbing functionality governance. |
+| max_n_simultaneous_scrubbing | Maximum number of simultaneous scrubbing tasks. Default: 2. |
+| scrubbing_default_period_days | Default scrubbing period in days, used when not explicitly set per volume. Default: 30. |
+| scrubbing_n_blksets_per_iteration | Number of blksets processed per scrubbing iteration. Controls granularity of progress across segments. Default: 16384. |
+| scrubbing | Enables or disables scrubbing globally. |
 | recovery_client_batch_n_blksets | Defines the number of block sets given to the client for recovery in each batch. <br>The default value of 0 implies using the internal TOMA default. |
 | topology_max_praids_in_a_report | Defines the maximum number of protection-RAIDs the TOMA will report on in a single update message. This is limited to avoid huge management updates in a single message. |
 | toma_do_not_report_disk_segment_gpts | Defines whether TOMAs report GPT information on local disks to management. |
@@ -3082,7 +3082,35 @@ The following tables defines the TOMA configuration parameters defined using `to
 
 ## Data Scrubbing
 
-TBD
+**Note:** This feature should be considered alpha.
+
+Data scrubbing is a background process that periodically reads volume data, validates it across redundant copies, and repairs any detected problems such as bad sectors. RAID-0 and JBOD volumes are not scrubbed, as they have no redundancy to validate or recover from.
+
+Each TOMA independently scrubs its local segments. Scrubbing is only performed on healthy, non-degraded volumes. The process works as follows:
+
+1. TOMA periodically scans its local segments to identify those eligible for scrubbing, based on the configured scrubbing period and the time each segment was last scrubbed.
+2. For each eligible segment, TOMA launches a scrubbing recovery task, up to the configured maximum number of simultaneous tasks.
+3. The client reads blksets from all redundant sources, verifies that data is consistent between them, and that the local data consistency check is valid where applicable. Bad sectors detected during scrubbing are repaired. Each client reads only the blksets owned by its node.
+4. The client reports success or failure back to TOMA, indicating the reason in case of failure (I/O error, data inconsistency, or local data consistency check error).
+5. When a segment is fully scrubbed, TOMA reports completion to management. Management aggregates these reports to determine when a full volume scrubbing cycle has completed and presents this to the user.
+
+Scrubbing progress is persistent and survives restarts.
+
+Scrubbing can be enabled or disabled at runtime:
+
+```bash
+/opt/nvmesh/tools/toma_rpc/toma_rpc config scrubbing 1  # enable
+/opt/nvmesh/tools/toma_rpc/toma_rpc config scrubbing 0  # disable
+```
+
+The following `toma_rpc` parameters govern scrubbing behavior, as documented in the [TOMA Configuration](#toma-configuration) section:
+
+| Parameter | Description |
+|---|---|
+| `max_n_simultaneous_scrubbing` | Maximum number of simultaneous scrubbing tasks. Default: 2. |
+| `scrubbing_default_period_days` | Default scrubbing period in days, used when not explicitly set per volume. Default: 30. |
+| `scrubbing_n_blksets_per_iteration` | Number of blksets processed per scrubbing iteration. Default: 16384. |
+| `scrubbing` | Enables or disables scrubbing globally. |
 
 # Management Configuration
 
@@ -4464,7 +4492,7 @@ The procedure for altering the setting is as follows:
 
 ## Key Rotation / Certificate Renewal
 
-NVMesh uses mutual TLS (mTLS) for authentication between components. Certificates are stored by default in `/etc/nvmesh.tls/` and referenced via the `/etc/nvmesh/tls/` symlink.
+When NVMesh uses mutual TLS (mTLS) for authentication between components, certificates are stored by default in `/etc/nvmesh.tls/` and referenced via the `/etc/nvmesh/tls/` symlink.
 
 ### Certificate Inventory
 
