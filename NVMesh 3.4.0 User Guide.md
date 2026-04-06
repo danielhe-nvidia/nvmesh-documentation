@@ -3477,7 +3477,7 @@ This directory is for the main client module, nvmeibc.
 | **dict_sign** | Is a signature of the dictionary used for the tracer. |
 | **disks** | Is a directory with a sub-directory for all disks or drives the client is interacting with to implement any of the attached volumes. <br> See the table below for the entries per DRIVE-ID within that directory. |
 | **echo** | For developers. |
-| **error_tags_info** | TBD |
+| **error_tags_info** | Provides a JSON-formatted list of client error counters, aggregated across all CPUs. Each entry includes the error name, the source file and function where it is defined, and the accumulated count. |
 | **instctls** | For user-space programs to control additional instances for multi-instance client functionality, which is deprecated. |
 | **inst_list.json** | Provides basic information for each instance of the client in use, related to multi-instance client functionality, which is deprecated. |
 | **jam/\<DRIVE-ID>** | In-depth information on journal area management per drive. |
