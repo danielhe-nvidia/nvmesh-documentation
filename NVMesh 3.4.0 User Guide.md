@@ -4464,7 +4464,78 @@ The procedure for altering the setting is as follows:
 
 ## Key Rotation / Certificate Renewal
 
-**TBD: It is important to populate this section**
+NVMesh uses mutual TLS (mTLS) for authentication between components. Certificates are stored by default in `/etc/nvmesh.tls/` and referenced via the `/etc/nvmesh/tls/` symlink.
+
+### Certificate Inventory
+
+The following certificates require periodic rotation:
+
+**Client nodes:**
+
+| File | Purpose |
+|---|---|
+| `Kafka-MCS.crt` / `Kafka-MCS.key` | Client authentication to Kafka MCS |
+| `Kafka-UpgradeAgent.crt` / `Kafka-UpgradeAgent.key` | Client authentication for the upgrade agent |
+| `kafka_ca_chain.crt` | CA chain for validating Kafka server certificates |
+
+**Target nodes:**
+
+| File | Purpose |
+|---|---|
+| `Kafka-zone1.TOMA.crt` / `Kafka-zone1.TOMA.key` | TOMA service Kafka client certificate |
+
+**Management nodes:**
+
+| File | Purpose |
+|---|---|
+| `Kafka-MCS.crt` / `Kafka-MCS.key` | Client authentication to Kafka MCS |
+| `Kafka-UpgradeAgent.crt` / `Kafka-UpgradeAgent.key` | Client authentication for the upgrade agent |
+| `Kafka-Server.crt` / `Kafka-Server.key` | Kafka broker/controller server certificate |
+| `Kafka-Management.crt` / `Kafka-Management.key` | Management service Kafka client certificate |
+| `Mgmt-HA.crt` / `Mgmt-HA.key` | Management HA inter-node certificate |
+| `Mongo-Server.crt` / `Mongo-Server.key` | MongoDB server certificate |
+| `Mongo-Mgmt.crt` / `Mongo-Mgmt.key` | Management-to-MongoDB client certificate |
+| `Mongo-Admin.crt` / `Mongo-Admin.key` | MongoDB admin authentication certificate |
+| `Rest-CLI.crt` / `Rest-CLI.key` | CLI-to-REST API client certificate |
+| `Rest-Server.crt` / `Rest-Server.key` | REST API server certificate |
+| `kafka_ca_chain.crt`, `mongo_ca_chain.crt`, `rest_ca_chain.crt`, `ca_chain.crt` | CA chains for the respective services |
+
+### Checking Certificate Expiry
+
+To check the expiry of a PEM certificate file:
+
+```bash
+openssl x509 -in /etc/nvmesh.tls/<certificate>.crt -noout -enddate
+```
+
+To check all certificates at once:
+
+```bash
+for cert in /etc/nvmesh.tls/*.crt; do
+  echo -n "$cert: "
+  openssl x509 -in "$cert" -noout -enddate 2>/dev/null || echo "not a PEM certificate"
+done
+```
+
+To check a Kafka JKS keystore:
+
+```bash
+keytool -list -v -keystore /etc/nvmesh.tls/<COMPONENT>.jks -storepass <password> | grep -E "Alias|until"
+```
+
+### Rotating Certificates
+
+Generate replacement certificates following the same process described in [Prepare Security Certificates](#prepare-security-certificates-optional). Then, for each node:
+
+1. Replace the certificate and key files in `/etc/nvmesh.tls/`.
+2. For Kafka broker nodes, rebuild the JKS keystores as described in [Prepare Security Certificates](#prepare-security-certificates-optional) and restart Kafka.
+3. For MongoDB nodes, replace the certificate bundle and restart MongoDB, or use `db.rotateCertificates()` in `mongosh` for a hot rotation.
+4. Restart the NVMesh components on the node:
+   - Management: `systemctl restart nvmeshmgr`
+   - Target: `systemctl restart nvmeshtarget`
+   - Client: `systemctl restart nvmeshclient`
+
+**Note:** When rotating CA chain certificates, all components that validate against that CA must be updated in a coordinated manner to avoid authentication failures. A maintenance window may be required.
 
 ## Target Cleanup
 
