@@ -3071,7 +3071,7 @@ The following tables defines the TOMA configuration parameters defined using `to
 | mgmt_leader_keep_alive_secs | This parameter will be removed from toma_rpc as it is now configured from the management. |
 | report_target_min_between_secs | Defines the minimum time between TOMA reports to management to avoid overloading managements with TOMA reports, i.e., as a throttling means. |
 | generic_block_device_support | Deprecated, had been used for non-NVMe drive support. |
-| praid_activation_timeout_sec | TBD |
+| praid_activation_timeout_sec | Defines how long, in seconds, to wait when initializing a PRAID for all components to be ready before proceeding to start it in a degraded state. Default: 20. |
 | udp_max_header_length | Defines the maximum UDP header length for the current network so that TOMA does not exceed the network’s MTU for TOMA-TOMA communication. |
 | disable_periodic_smart_polling | Defines how often TOMA reads NVMe drives S.M.A.R.T. information. |
 | tracer_debug_level | Sets the tracer debug level as described in Binary Tracing. |
