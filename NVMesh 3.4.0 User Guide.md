@@ -4586,6 +4586,24 @@ To clean up an entire cluster in order to "start over" performance the following
 5. Clear the Mongodb with a command such as the following from a management node: `mongosh mongodb://<MONGO-IP-ADDRESS>:27017/management --file /opt/nvmesh/management/clearDB.js`.
 6. Restart the components in the same order as when starting a new cluster.
 
+## General Troubleshooting
+
+### TCP
+
+#### siw module fails to unload
+
+Software iWARP (SIW) uses a custom TCP congestion algorithm, `siw_tcp_ca`, so that ACK processing can be tied to RDMA completion handling. While any sockets are still using this congestion algorithm, the kernel keeps the SIW module in use and `rmmod siw` (or an equivalent unload) will fail. To locate such sockets, run:
+
+```bash
+ss -Hnti | grep siw_tcp_ca
+```
+
+To close a matching socket by its local and peer addresses (replace `<local>` and `<peer>` with the values from the listing), use:
+
+```bash
+ss -K src <local> dest <peer>
+```
+
 # Configuration Limits
 
 The following sections describe various system limits. Some of these may be approximations. Specific per use case testing is always warranted.
