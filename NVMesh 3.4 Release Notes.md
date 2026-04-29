@@ -201,7 +201,7 @@ $nrconf{override_rc}->{qr(^nvmesh.\*\.service$)} = 0;
 1. [NVMESH-7602](https://jirasw.nvidia.com/browse/NVMESH-7602) - Added exporter visibility for disk timeout counters to improve disk timeout monitoring.
 2. [NVMESH-8141](https://jirasw.nvidia.com/browse/NVMESH-8141), [NVMESH-8446](https://jirasw.nvidia.com/browse/NVMESH-8446) - Added generic Linux kernel 6.17 support, including Linux kernel 6.17.0-1007-oracle.
 3. [NVMESH-8164](https://jirasw.nvidia.com/browse/NVMESH-8164) - Added support for MongoDB 8.0 and updated the `mongosh` dependency constraint accordingly.
-4. [NVMESH-8227](https://jirasw.nvidia.com/browse/NVMESH-8227) - Added support preparation for Rocky Linux 10.1 with kernel 6.12.0 and DOCA-OFED 3.2.2.
+4. [NVMESH-8227](https://jirasw.nvidia.com/browse/NVMESH-8227) - Added support for Rocky Linux 10.1 with kernel 6.12.0 and DOCA-OFED 3.2.2 for the kernel modules. Management testing is still underway.
 
 ## Fixed Issues
 
