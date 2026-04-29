@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 | Version |          Date           | Release | Soul                           |
 | :-----: | :---------------------: | :-----: | ------------------------------ |
 |   1.0   | <nobr>2026-03-12</nobr> |  3.4.0  | First release of NVMesh 3.4.0. |
+|   1.1   | <nobr>2026-04-29</nobr> | 3.4.0-HF1 | Release of NVMesh 3.4.0 HF1. |
 
 # General
 
@@ -192,3 +193,40 @@ Upgrading from versions prior to NVMesh 3.2.0-HF2 is not possible. Upgrading fro
 $nrconf{override_rc} ||= {};
 $nrconf{override_rc}->{qr(^nvmesh.\*\.service$)} = 0;
 ```
+
+# NVMesh 3.4.0-HF1
+
+## Functionality Changes
+
+1. [NVMESH-7602](https://jirasw.nvidia.com/browse/NVMESH-7602) - Added exporter visibility for disk timeout counters to improve disk timeout monitoring.
+2. [NVMESH-8141](https://jirasw.nvidia.com/browse/NVMESH-8141), [NVMESH-8446](https://jirasw.nvidia.com/browse/NVMESH-8446) - Added generic Linux kernel 6.17 support, including Linux kernel 6.17.0-1007-oracle.
+3. [NVMESH-8164](https://jirasw.nvidia.com/browse/NVMESH-8164) - Added support for MongoDB 8.0 and updated the `mongosh` dependency constraint accordingly.
+4. [NVMESH-8227](https://jirasw.nvidia.com/browse/NVMESH-8227) - Added support preparation for Rocky Linux 10.1 with kernel 6.12.0 and DOCA-OFED 3.2.2.
+
+## Fixed Issues
+
+1. [NVMESH-5149](https://jirasw.nvidia.com/browse/NVMESH-5149) - Fixed TOMA handling when the system clock moves backward.
+2. [NVMESH-7198](https://jirasw.nvidia.com/browse/NVMESH-7198) - Fixed a TOMA issue where rebuilds could require a TOMA leader restart to begin after drive re-eviction.
+3. [NVMESH-7422](https://jirasw.nvidia.com/browse/NVMESH-7422) - Fixed a TOMA shutdown delay caused by long-running snapshot activity.
+4. [NVMESH-7595](https://jirasw.nvidia.com/browse/NVMESH-7595) - Improved TOMA handling of Kafka connection failures that could prevent it from receiving management configuration.
+5. [NVMESH-7600](https://jirasw.nvidia.com/browse/NVMESH-7600) - Removed the obsolete `RPM/docker` directory from the management package sources.
+6. [NVMESH-7682](https://jirasw.nvidia.com/browse/NVMESH-7682) - Fixed RPM packaging so `nvmeshmgr` is enabled only on first installation and is not re-enabled during upgrades when it was disabled.
+7. [NVMESH-7968](https://jirasw.nvidia.com/browse/NVMESH-7968) - Fixed SERJIO statistics reporting so successful `alloc_rng` operations are not incorrectly counted as errors.
+8. [NVMESH-7970](https://jirasw.nvidia.com/browse/NVMESH-7970) - Fixed a TOMA issue that could leave newly created volumes degraded or not fully online.
+9. [NVMESH-8050](https://jirasw.nvidia.com/browse/NVMESH-8050) - Preserved TLS certificate file permissions during certificate rotation so monitoring tools can continue reading certificate metadata.
+10. [NVMESH-8111](https://jirasw.nvidia.com/browse/NVMESH-8111) - Fixed a rare exporter issue where SERJIO metrics could omit a drive.
+11. [NVMESH-8298](https://jirasw.nvidia.com/browse/NVMESH-8298) - Added a TOMA memory limit to prevent excessive memory consumption.
+12. [NVMESH-8310](https://jirasw.nvidia.com/browse/NVMESH-8310) - Fixed cleanup of Kafka topics used for TOMA commands so cleared TOMA commands are garbage collected.
+13. [NVMESH-8353](https://jirasw.nvidia.com/browse/NVMESH-8353) - Fixed TOMA certificate reload handling so a TOMA that was down during certificate expiration can recover after renewal.
+14. [NVMESH-8508](https://jirasw.nvidia.com/browse/NVMESH-8508) - Fixed client upgrade from NVMesh 3.3.2 to 3.4.0-HF1 so the client module loads correctly after restart.
+15. [NVMESH-8527](https://jirasw.nvidia.com/browse/NVMESH-8527) - Fixed core compilation with DOCA-OFED 25.10.
+
+## Known Issues
+
+There are no known bugs in NVMesh 3.4.0-HF1.
+
+## Deferred Issues
+
+1. [NVMESH-8535](https://jirasw.nvidia.com/browse/NVMESH-8535) - NDU is not supported on 6.x kernels.
+2. [NVMESH-8539](https://jirasw.nvidia.com/browse/NVMESH-8539) - An issue was found with slow IO response. This is still under investigation, as the IO load may have been excessive. The decision was made not to hold this version back at this point.
+3. [NVMESH-8583](https://jirasw.nvidia.com/browse/NVMESH-8583) - A TOMA may not connect to the system initially. To recover, restart the TOMA. If that is insufficient, delete the target and restart `nvmeshtarget`.
