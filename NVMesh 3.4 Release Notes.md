@@ -230,3 +230,140 @@ There are no known bugs in NVMesh 3.4.0-HF1.
 1. [NVMESH-8535](https://jirasw.nvidia.com/browse/NVMESH-8535) - NDU is not supported on 6.x kernels.
 2. [NVMESH-8539](https://jirasw.nvidia.com/browse/NVMESH-8539) - An issue was found with slow IO response. This is still under investigation, as the IO load may have been excessive. The decision was made not to hold this version back at this point.
 3. [NVMESH-8583](https://jirasw.nvidia.com/browse/NVMESH-8583) - A TOMA may not connect to the system initially. To recover, restart the TOMA. If that is insufficient, delete the target and restart `nvmeshtarget`.
+
+# Rocky Linux 10.1 Environment Setup
+
+## Overview
+
+This section describes how to configure a **Rocky Linux 10.1** system with:
+
+- **Python 3.12** — system default, application runtime
+- **Python 3.10** — side-by-side, required for build/compile-time dependencies
+- **Node.js 18** — replacing the native newer version
+- **Java** — OpenJDK with version fallback
+- **MongoDB 7.0**
+- **Kafka client** — confluent-kafka 2.8.0 with bundled librdkafka 2.8.0, running under Python 3.12
+
+**All commands must be run as root or with sudo.**
+
+## 1. Base System Preparation
+
+    yum update -y
+    yum install -y wget curl tar gzip ca-certificates epel-release dnf-plugins-core
+    dnf config-manager --set-enabled crb
+
+## 2. Install Python 3.10 (Build/Compile Dependency)
+
+    yum groupinstall -y "Development Tools"
+    yum install -y gcc make openssl-devel bzip2-devel libffi-devel zlib-devel \
+                   xz-devel sqlite-devel readline-devel tk-devel ncurses-devel
+
+    cd /tmp
+    wget https://www.python.org/ftp/python/3.10.14/Python-3.10.14.tgz
+    tar xzf Python-3.10.14.tgz
+    cd Python-3.10.14
+    ./configure --enable-optimizations --prefix=/usr/local
+    make -j"$(nproc)"
+    make altinstall
+
+**Verify:** python3.10 --version → Python 3.10.14
+
+## 3. Install Node.js 18
+
+### Remove the native Node.js
+
+    yum remove -y nodejs npm || true
+    yum module reset -y nodejs || true
+    yum module disable -y nodejs || true
+
+### Install Node.js 18 from NodeSource
+
+    curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+    yum install -y nodejs-18.* --allowerasing
+
+**Verify:** node --version → v18.x.x
+
+## 4. Install Java (with version fallback)
+
+    yum install -y java-21-openjdk-headless \
+      || yum install -y java-21-openjdk \
+      || yum install -y java-17-openjdk-headless \
+      || yum install -y java-1.8.0-openjdk
+
+    echo 'export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))' | tee /etc/profile.d/java.sh
+    echo 'export PATH=$JAVA_HOME/bin:$PATH' | tee -a /etc/profile.d/java.sh
+    source /etc/profile.d/java.sh
+
+**Verify:** java -version
+
+## 5. Install MongoDB 7.0
+
+> Uses RHEL 9 repo (no RHEL 10 repo available yet). Requires AVX CPU support.
+
+### Add the MongoDB 7.0 repo
+
+    cat > /etc/yum.repos.d/mongodb-org-7.0.repo <<REPO
+    [mongodb-org-7.0]
+    name=MongoDB Repository
+    baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/7.0/x86_64/
+    gpgcheck=0
+    enabled=1
+    gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
+    REPO
+
+### Install
+
+    yum install -y mongodb-org
+
+### (Optional) Pin MongoDB 7.0
+
+    yum install -y python3-dnf-plugin-versionlock
+    dnf versionlock add mongodb-org mongodb-org-database mongodb-org-server \
+                        mongodb-org-mongos mongodb-org-tools mongodb-mongosh
+
+### Enable and start
+
+    systemctl daemon-reload
+    systemctl enable --now mongod
+
+**Verify:** mongod --version → db version v7.0.x
+
+## 6. Install Kafka Client (confluent-kafka)
+
+The confluent-kafka wheel from PyPI bundles its own **librdkafka 2.8.0**.
+The system package librdkafka-2.1.1-7.el10 may be present but is **not loaded** by Python.
+
+### Install
+
+    python3.12 -m pip install confluent-kafka
+
+### Verify
+
+    python3.12 -c "import confluent_kafka; print('confluent-kafka:', confluent_kafka.__version__); print('librdkafka   :', confluent_kafka.libversion()[0])"
+
+Expected:
+
+    confluent-kafka: 2.8.0
+    librdkafka   : 2.8.0
+
+## 7. Verification Checklist
+
+| Component           | Command                                              | Expected         |
+|---------------------|------------------------------------------------------|------------------|
+| OS                  | cat /etc/rocky-release                               | Rocky Linux 10.1 |
+| Python (runtime)    | python3.12 --version                                 | Python 3.12.x    |
+| Python (build-only) | python3.10 --version                                 | Python 3.10.14   |
+| Node.js             | node --version                                       | v18.x.x          |
+| Java                | java -version                                        | 21 / 17 / 1.8    |
+| MongoDB             | mongod --version                                     | v7.0.x           |
+| confluent-kafka     | python3.12 -c "import confluent_kafka; ..."          | 2.8.0            |
+| librdkafka runtime  | python3.12 -c "... confluent_kafka.libversion() ..." | 2.8.0            |
+
+## 8. Known Notes
+
+1. **Python 3.12** is the application runtime.
+2. **Python 3.10** is build-only (make altinstall, does not overwrite system Python).
+3. **Node.js** native newer version must be removed and module disabled before installing Node 18.
+4. **MongoDB 7.0** — RHEL 9 repo, requires AVX CPU, EOL August 2026.
+5. **Kafka client** — bundled librdkafka 2.8.0 inside wheel; system RPM 2.1.1 unused by Python.
+6. **Java** — JAVA_HOME only needed if running a Kafka broker locally.
