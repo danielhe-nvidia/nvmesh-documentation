@@ -1263,7 +1263,7 @@ Non-NVMesh package dependencies for Red Hat Enterprise Linux (RHEL) 8.x and comp
 | --- | --- |
 | nvmesh-base | ethtool <br> smartmontools <br> util-linux |
 | nvmesh-client | nvmesh-base <br> xz |
-| nvmesh-target | nvmesh-client + <br> 2.6.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
+| nvmesh-target | nvmesh-client + <br> 2.13.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
 
 For RDMA environments, on service startup, the following packages are required:
 
@@ -1300,7 +1300,7 @@ Non-NVMesh package dependencies for the Ubuntu 22.04 distribution are presented 
 | --- | --- |
 | nvmesh-base | ethtool <br> smartmontools <br> util-linux |
 | nvmesh-client | nvmesh-base <br> xz-utils |
-| nvmesh-target | nvmesh-client <br> 2.6.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
+| nvmesh-target | nvmesh-client <br> 2.13.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
 
 In addition, for RDMA environments, on service startup, the following are required:
 
@@ -1541,19 +1541,19 @@ The **`cq_vec_flags_tcp`** parameter on the NVMesh common module (`nvmeib_common
 
 These are **starting points**, not universal rules—always measure with representative I/O.
 
-- **Many CPU cores**  
+- **Many CPU cores**
   You can often increase **`TCP_NUM_RX_QUEUE`** and **`TCP_NUM_CHANNELS`** (within NIC and driver limits) so traffic and completions spread across more queues and CPUs. Prefer a **NUMA-aware** **`TCP_RX_CPU_AFFINITY_DOMAIN`** (for example `pernuma` or an explicit list of CPUs local to the NIC) to avoid remote-memory access. For receive-side spreading, see [Flow steering, RSS, and multi-port listeners](#flow-steering-rss-and-multi-port-listeners): default **`TCP_FLOW_STEER`** relies on **RSS** and multi-port listeners; **`TCP_FLOW_STEER="ntuple"`** can improve steering when your hardware supports it. Consider **`TCP_RPS_MODE`** as well; incorrect combinations can hurt latency, so change one dimension at a time.
 
-- **Small number of cores**  
+- **Small number of cores**
   Use **fewer RX queues** and **lower channel counts** so you do not spread work across more CPUs than exist or starve application threads. **`persocket`** or a **short explicit CPU list** for **`TCP_RX_CPU_AFFINITY_DOMAIN`** is often appropriate. On **clients**, you can cap TCP channel usage with the **`nvmeibc`** module parameters **`nr_max_channels_per_path_tcp`** (maximum IO channels per path for TCP) and **`max_lock_channels_tcp`** (maximum lock channels per disk for TCP, including secondary channels). Lower values reduce connection and locking parallelism—appropriate when core count is low. See [Module Parameters](#module-parameters). If hyper-threads contend on the same physical core, consider pinning workloads or reducing parallelism so pairs of hyper-threads are not saturated by competing work. Avoid aggressive RPS unless you have verified IRQ load.
 
-- **One NIC per NUMA node (multi-NIC)**  
+- **One NIC per NUMA node (multi-NIC)**
   Treat each NIC as a **separate NUMA domain**: use **`pernuma`** (or per-device CPU lists) so each interface’s steering stays on the local socket.
 
-- **Single NIC**  
+- **Single NIC**
   A single interface must carry all traffic; balance **queue count** with **core count** and leave headroom for the OS and NVMesh userspace. **`persocket`** or **`fullspread`** may apply depending on whether you want to concentrate on one socket or use both sockets on dual-socket servers—profile both if the NIC is attached to one NUMA node. If IRQ affinity is managed by another tool (for example vendor tuning), set **`TCP_RX_SET_IRQ_AFFINITY`** to `No` and avoid double-configuration.
 
-- **Manual IRQ/RPS tuning**  
+- **Manual IRQ/RPS tuning**
   If you already apply a vendor profile or custom IRQ layout, disable NVMesh’s IRQ step with **`TCP_RX_SET_IRQ_AFFINITY="No"`**, or disable the whole script with **`TCP_SET_AFFINITY="No"`**, and keep **`TCP_RPS_MODE=donttouch`** unless you intend to change RPS from NVMesh.
 
 For RDMA-centric tuning (IRQ balance, NVIDIA tools, and related topics), see [CPU Interrupt Affinity and IRQ Balancing](#cpu-interrupt-affinity-and-irq-balancing). TCP/SIW-specific tuning complements that guidance when traffic uses SoftiWarp instead of or in addition to RoCE.
@@ -4734,6 +4734,7 @@ The following sections describe various system limits. Some of these may be appr
 | Min volume size | 1 GB |
 | Max volume size | Limited by cluster capacity |
 | Max clients connected to a single volume | 1024 |
+| Max volumes attached  to a single client | 1024, **<u>Note:</u>** Unrelated to NVMesh, attaching too many volumes (seen via `lsblk`) might strain the machine due to various internal linux monitoring utilities, nfs, etc |
 |  |  |
 | Volume Provisioning Group Limitations |  |
 | Name | 1024 Unicode characters |
