@@ -1,0 +1,20 @@
+version: "1.0"
+project: "nvmesh-documentation"
+last_updated: "2026-07-26T11:21:00Z"
+
+repository_exposure_classification:
+  visibility: "Public"
+  basis: "User-confirmed public visibility; apply public-safe detail despite the checkout being hosted on a non-public forge"
+  confirmed_by: "iyehiam"
+  date: "2026-07-26"
+
+service_exposure_classification:
+  tier: "Internal-Isolated"
+  confidence: "high"
+  basis: "User-confirmed; static documentation artifacts with no live service or production deployment configuration"
+  confirmed_by: "iyehiam"
+  date: "2026-07-26"
+
+false_positives: []
+accepted_risks: []
+suppressed_cves: []
