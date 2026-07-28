@@ -1,11 +1,11 @@
-# NVMesh 3.4.0 CLI Guide
+# NVMesh 3.5.0 CLI Guide
 
 <!--
 SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 -->
 
-API Version: **16**
+API Version: **18.0.0**
 
 ## Copyright and Trademark Information
 
@@ -21,7 +21,7 @@ and should be treated as such.
 This document describes the command-line interface of the NVMesh storage solution.
 For more information on NVMesh, refer to the *NVMesh User Guide*.
 
-**Audience** — Storage and application administration personnel responsible for
+**Audience** - Storage and application administration personnel responsible for
 installing and deploying NVMesh.
 
 ## Introduction
@@ -35,7 +35,7 @@ day-to-day management and provisioning activities with homogeneous semantics.
 
 The CLI tool interacts with the Management Servers using management's REST API.
 The outputs from the CLI are strongly dependent on this API.
-This document is based on management **API version 16**.
+This document is based on management **API version 18.0.0**.
 
 ## Installation
 
@@ -56,12 +56,12 @@ To start the NVMesh shell, run `nvmesh` in a terminal.
 Two configurations should be made initially:
 
 1. Set definitions for accessing NVMesh Management using its REST API in
-   `/etc/nvmesh/nvmesh.conf`.  Typically, if the NVMesh client or NVMesh target
+   `/etc/nvmesh/nvmesh.conf`. Typically, if the NVMesh client or NVMesh target
    have been configured for this machine, these will already be in place.
    Otherwise, set `_REST_SERVERS` and `_REST_AUTH_METHOD` per the instructions
    in the file.
 
-2. Provide login credentials.  Initially, `nvmesh` has no stored credentials.
+2. Provide login credentials. Initially, `nvmesh` has no stored credentials.
    It requires management/API login information for an administrator account.
    Upon first launch, the tool will prompt for credentials:
 
@@ -110,7 +110,7 @@ first level of available commands and options.
 
 Most commands represent NVMesh entities (volumes, drives, clients, etc.).
 For every entity, there is a second level of commands that are operations on
-that entity — for example:
+that entity - for example:
 
 ```bash
 nvmesh volume --help          # List volume operations
@@ -159,6 +159,7 @@ Common operations across entities:
   - [drive exclude-nvme](#drive-exclude-nvme)
   - [drive format](#drive-format)
   - [drive include-nvme](#drive-include-nvme)
+  - [drive reinstate](#drive-reinstate)
   - [drive show](#drive-show)
   - [drive wait](#drive-wait)
 - [drive-class](#drive-class)
@@ -214,6 +215,7 @@ Common operations across entities:
 - [upgrade-agent](#upgrade-agent)
   - [upgrade-agent count](#upgrade-agent-count)
   - [upgrade-agent delete](#upgrade-agent-delete)
+  - [upgrade-agent keepalive](#upgrade-agent-keepalive)
   - [upgrade-agent show](#upgrade-agent-show)
 - [upgrade-step](#upgrade-step)
   - [upgrade-step count](#upgrade-step-count)
@@ -252,6 +254,7 @@ Common operations across entities:
   - [vpg create](#vpg-create)
   - [vpg delete](#vpg-delete)
   - [vpg extend](#vpg-extend)
+  - [vpg reclaim](#vpg-reclaim)
   - [vpg show](#vpg-show)
   - [vpg update](#vpg-update)
 
@@ -387,10 +390,10 @@ _Create a new instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
+| `--hosts` | id/name |  | Hosts |  | [] |
 | `--labels` | text |  | Labels |  | [] |
 | `--name`, `-n` | text | Yes | Name |  |  |
-| `--hosts` | id/name |  | Hosts |  | [] |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--config` | key=value |  | Config |  | {} |
 
 #### config-profile delete
@@ -422,10 +425,10 @@ _Update properties of an existing instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
+| `--hosts` | id/name |  | Hosts |  |  |
 | `--labels` | text |  | Labels |  |  |
 | `--name`, `-n` | id/name | Yes | Name |  |  |
-| `--hosts` | id/name |  | Hosts |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--config` | key=value |  | Config |  |  |
 | `--delete-config` | text |  | Delete key(s) from config |  |  |
 
@@ -479,6 +482,14 @@ _Include NVME drive via /usr/bin/nvmesh_target on target_
 |----------|------|----------|-------------|---------|---------|
 | `--name`, `-n` | id/name | Yes | Drive id |  |  |
 
+#### drive reinstate
+
+_Reinstate Drive_
+
+| Argument | Type | Required | Description | Choices | Default |
+|----------|------|----------|-------------|---------|---------|
+| `--id` | id/name | Yes |  |  |  |
+
 #### drive show
 
 _Show instances_
@@ -522,9 +533,9 @@ _Create a new instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
-| `--drives` | id/name |  | Drives |  |  |
 | `--domains` | domain |  | Domains |  |  |
+| `--drives` | id/name |  | Drives |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--name`, `-n` | text | Yes | Name |  |  |
 
 #### drive-class delete
@@ -556,9 +567,9 @@ _Update properties of an existing instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
-| `--drives` | id/name |  | Drives |  |  |
 | `--domains` | domain |  | Domains |  |  |
+| `--drives` | id/name |  | Drives |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--name`, `-n` | id/name | Yes | Name |  |  |
 
 ---
@@ -596,11 +607,11 @@ _Update properties of an existing instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--logging-level` | logginglevel |  | Logging Level (options: ['INFO', 'WARNING', 'ERROR', 'DEBUG', 'VERBOSE', 'NONE'] |  |  |
 | `--days-before-log-entry-expires` | integer |  | Days Before Log Entry Expires |  |  |
 | `--enable-zones` | flag |  | Enable Zones |  |  |
-| `--domain` | text |  | Domain |  |  |
 | `--enable-nvmf` | flag |  | Enable NVMf |  |  |
+| `--logging-level` | logginglevel |  | Logging Level (options: ['INFO', 'WARNING', 'ERROR', 'DEBUG', 'VERBOSE', 'NONE'] |  |  |
+| `--domain` | text |  | Domain |  |  |
 
 ---
 
@@ -841,10 +852,10 @@ _Create a new instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
 | `--domains` | domain |  | Domains |  |  |
-| `--name`, `-n` | text | Yes | Name |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--targets` | id/name |  | Targets |  |  |
+| `--name`, `-n` | text | Yes | Name |  |  |
 
 #### target-class delete
 
@@ -875,10 +886,10 @@ _Update properties of an existing instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
 | `--domains` | domain |  | Domains |  |  |
-| `--name`, `-n` | id/name | Yes | Name |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--targets` | id/name |  | Targets |  |  |
+| `--name`, `-n` | id/name | Yes | Name |  |  |
 
 ---
 
@@ -896,12 +907,12 @@ _Create a new instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--machines-to-upgrade` | id/name |  | Machines To Upgrade |  |  |
-| `--execution-mode` | upgradeexecutionmodes |  | Execution Mode (options: ['manual', 'manualStart', 'automatic'] |  |  |
 | `--max-errors-threshold` | integer |  | Max Errors Threshold |  |  |
-| `--min-redundancy-level` | upgraderedundancylevels |  | Min Redundancy Level (options: ['minimal', 'max', 'none'] |  |  |
-| `--destination-version` | text |  | Destination Version |  |  |
+| `--execution-mode` | upgradeexecutionmodes |  | Execution Mode (options: ['manual', 'manualStart', 'automatic'] |  |  |
 | `--skip-machines-on-failure` | flag |  | Skip Machines On Failure |  |  |
+| `--destination-version` | text |  | Destination Version |  |  |
+| `--machines-to-upgrade` | id/name |  | Machines To Upgrade |  |  |
+| `--min-redundancy-level` | upgraderedundancylevels |  | Min Redundancy Level (options: ['minimal', 'max', 'none'] |  |  |
 | `--max-concurrent-clients` | integer |  | Max Concurrent Clients |  |  |
 
 #### upgrade delete
@@ -960,6 +971,14 @@ _Show how many instances of this type are in the system_
 #### upgrade-agent delete
 
 _Delete one or more specified upgrade agents_
+
+| Argument | Type | Required | Description | Choices | Default |
+|----------|------|----------|-------------|---------|---------|
+| `--hostname` | id/name | Yes |  |  |  |
+
+#### upgrade-agent keepalive
+
+_Request keepalive from an agent_
 
 | Argument | Type | Required | Description | Choices | Default |
 |----------|------|----------|-------------|---------|---------|
@@ -1040,12 +1059,12 @@ _Create a new instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
-| `--email` | text | Yes | Email |  |  |
 | `--role` | role |  | Role (options: ['Admin', 'Observer'] |  | Observer |
+| `--email` | text | Yes | Email |  |  |
 | `--notification-level` | notificationlevel |  | Notification Level (options: ['NONE', 'WARNING', 'ERROR'] |  | NONE |
-| `--relogin` | flag |  | Relogin |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--password` | text |  | Password |  |  |
+| `--relogin` | flag |  | Relogin |  |  |
 
 #### user delete
 
@@ -1076,10 +1095,10 @@ _Update properties of an existing instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
-| `--email` | id/name | Yes | Email |  |  |
 | `--role` | role |  | Role (options: ['Admin', 'Observer'] |  |  |
+| `--email` | id/name | Yes | Email |  |  |
 | `--notification-level` | notificationlevel |  | Notification Level (options: ['NONE', 'WARNING', 'ERROR'] |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 
 ---
 
@@ -1114,39 +1133,39 @@ _Create a new instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
-| `--relative-rebuild-priority` | integer |  | Relative Rebuild Priority |  |  |
+| `--crc-enabled` | flag |  | CRC Enabled |  |  |
+| `--name`, `-n` | text | Yes | Name |  |  |
+| `--target-classes` | id/name |  | Target Classes |  |  |
+| `--drive-classes` | id/name |  | Drive Classes |  |  |
 | `--mdv-spec-limit-by-nodes` | id/name |  | Mdv Spec Limit By Nodes |  |  |
 | `--mdv-spec-limit-by-disks` | id/name |  | Mdv Spec Limit By Disks |  |  |
 | `--mdv-spec-server-classes` | id/name |  | Mdv Spec Server Classes |  |  |
 | `--mdv-spec-disk-classes` | id/name |  | Mdv Spec Disk Classes |  |  |
 | `--mdv-spec-vpg` | id/name |  | Mdv Spec Vpg |  |  |
-| `--enabled-nvmf-clients` | text |  | Enabled NVMf Clients |  |  |
-| `--vsgs`, `--volume-security-group` | id/name |  | VSGs |  | [] |
-| `--name`, `-n` | text | Yes | Name |  |  |
-| `--source-id` | text |  | Source ID |  |  |
 | `--limit-by-nodes`, `-T` | text |  | Limit By Nodes |  | [] |
-| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
-| `--drive-classes` | id/name |  | Drive Classes |  |  |
-| `--crc-enabled` | flag |  | CRC Enabled |  |  |
-| `--metadata` | key=value |  | Metadata |  | {} |
-| `--is-read-only` | flag |  | Is Read Only |  |  |
-| `--target-classes` | id/name |  | Target Classes |  |  |
-| `--limit-by-disks`, `-D` | text |  | Limit By Disks |  | [] |
+| `--enabled-nvmf-clients` | text |  | Enabled NVMf Clients |  |  |
 | `--nvmf-enabled` | flag |  | NVMf Enabled |  |  |
-| `--data-blocks` | integer |  | Data Blocks |  |  |
-| `--protection-level` | ecseparationtype |  | Protection Level (options: ['ignore', 'full', 'minimal'] |  |  |
-| `--stripe-width` | integer |  | Stripe Width |  |  |
-| `--vpg` | text |  | Vpg |  |  |
-| `--raid-level`, `--rl` | raidlevel |  | Raid Level (options: ['ec', 'lvm', '0', '1', '10'] |  |  |
-| `--number-of-mirrors` | integer |  | Number Of Mirrors |  |  |
-| `--encryption-header-size` | integer |  | Encryption Header Size |  | 16 |
-| `--stripe-size` | integer |  | Stripe Size |  |  |
-| `--ignore-node-separation` | flag |  | Ignore Node Separation |  |  |
-| `--domain` | text |  | Domain |  |  |
-| `--parity-blocks` | integer |  | Parity Blocks |  |  |
-| `--is-encrypted` | flag |  | Is Encrypted |  |  |
+| `--vsgs`, `--volume-security-group` | id/name |  | VSGs |  | [] |
+| `--relative-rebuild-priority` | integer |  | Relative Rebuild Priority |  |  |
+| `--is-read-only` | flag |  | Is Read Only |  |  |
+| `--source-id` | text |  | Source ID |  |  |
+| `--limit-by-disks`, `-D` | text |  | Limit By Disks |  | [] |
+| `--description`, `-d` | text |  | Description |  |  |
+| `--metadata` | key=value |  | Metadata |  | {} |
+| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
 | `--capacity`, `-c` | size |  | Capacity |  |  |
+| `--encryption-header-size` | integer |  | Encryption Header Size |  | 16 |
+| `--protection-level` | ecseparationtype |  | Protection Level (options: ['ignore', 'full', 'minimal'] |  |  |
+| `--raid-level`, `--rl` | raidlevel |  | Raid Level (options: ['ec', 'sec', 'lvm', '0', '1', '10'] |  |  |
+| `--stripe-size` | integer |  | Stripe Size |  |  |
+| `--parity-blocks` | integer |  | Parity Blocks |  |  |
+| `--number-of-mirrors` | integer |  | Number Of Mirrors |  |  |
+| `--vpg` | text |  | Vpg |  |  |
+| `--stripe-width` | integer |  | Stripe Width |  |  |
+| `--ignore-node-separation` | flag |  | Ignore Node Separation |  |  |
+| `--data-blocks` | integer |  | Data Blocks |  |  |
+| `--is-encrypted` | flag |  | Is Encrypted |  |  |
+| `--domain` | text |  | Domain |  |  |
 | `--wait` | flag |  | Wait for operation to take effect |  |  |
 | `--timeout` | integer |  | Seconds to wait (default 60) |  | 60 |
 
@@ -1234,27 +1253,27 @@ _Update properties of an existing instance_
 |----------|------|----------|-------------|---------|---------|
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
-| `--description`, `-d` | text |  | Description |  |  |
-| `--relative-rebuild-priority` | integer |  | Relative Rebuild Priority |  |  |
+| `--crc-enabled` | flag |  | CRC Enabled |  |  |
+| `--name`, `-n` | id/name | Yes | Name |  |  |
+| `--target-classes` | id/name |  | Target Classes |  |  |
+| `--drive-classes` | id/name |  | Drive Classes |  |  |
 | `--mdv-spec-limit-by-nodes` | id/name |  | Mdv Spec Limit By Nodes |  |  |
 | `--mdv-spec-limit-by-disks` | id/name |  | Mdv Spec Limit By Disks |  |  |
 | `--mdv-spec-server-classes` | id/name |  | Mdv Spec Server Classes |  |  |
 | `--mdv-spec-disk-classes` | id/name |  | Mdv Spec Disk Classes |  |  |
 | `--mdv-spec-vpg` | id/name |  | Mdv Spec Vpg |  |  |
-| `--enabled-nvmf-clients` | text |  | Enabled NVMf Clients |  |  |
-| `--vsgs`, `--volume-security-group` | id/name |  | VSGs |  |  |
-| `--name`, `-n` | id/name | Yes | Name |  |  |
-| `--source-id` | text |  | Source ID |  |  |
 | `--limit-by-nodes`, `-T` | text |  | Limit By Nodes |  |  |
-| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
-| `--drive-classes` | id/name |  | Drive Classes |  |  |
-| `--crc-enabled` | flag |  | CRC Enabled |  |  |
+| `--enabled-nvmf-clients` | text |  | Enabled NVMf Clients |  |  |
+| `--nvmf-enabled` | flag |  | NVMf Enabled |  |  |
+| `--vsgs`, `--volume-security-group` | id/name |  | VSGs |  |  |
+| `--relative-rebuild-priority` | integer |  | Relative Rebuild Priority |  |  |
+| `--is-read-only` | flag |  | Is Read Only |  |  |
+| `--source-id` | text |  | Source ID |  |  |
+| `--limit-by-disks`, `-D` | text |  | Limit By Disks |  |  |
+| `--description`, `-d` | text |  | Description |  |  |
 | `--metadata` | key=value |  | Metadata |  |  |
 | `--delete-metadata` | text |  | Delete key(s) from metadata |  |  |
-| `--is-read-only` | flag |  | Is Read Only |  |  |
-| `--target-classes` | id/name |  | Target Classes |  |  |
-| `--limit-by-disks`, `-D` | text |  | Limit By Disks |  |  |
-| `--nvmf-enabled` | flag |  | NVMf Enabled |  |  |
+| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
 
 #### volume wait
 
@@ -1287,8 +1306,8 @@ _Create a new instance_
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
 | `--description`, `-d` | text |  | Description |  |  |
-| `--key-pairs` | text |  | Key Pairs |  |  |
 | `--name`, `-n` | text | Yes | Name |  |  |
+| `--key-pairs` | text |  | Key Pairs |  |  |
 
 #### volume-security-group delete
 
@@ -1320,8 +1339,8 @@ _Update properties of an existing instance_
 | `--cli-template` | text |  | Pull default values from a named template |  |  |
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
 | `--description`, `-d` | text |  | Description |  |  |
-| `--key-pairs` | text |  | Key Pairs |  |  |
 | `--name`, `-n` | id/name | Yes | Name |  |  |
+| `--key-pairs` | text |  | Key Pairs |  |  |
 
 ---
 
@@ -1341,24 +1360,24 @@ _Create a new instance_
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
 | `--description`, `-d` | text |  | Description |  |  |
 | `--vsgs`, `--volume-security-group` | id/name |  | VSGs |  |  |
-| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
 | `--name`, `-n` | text | Yes | Name |  |  |
-| `--data-blocks` | integer |  | Data Blocks |  |  |
-| `--protection-level` | ecseparationtype |  | Protection Level (options: ['ignore', 'full', 'minimal'] |  |  |
-| `--stripe-width` | integer |  | Stripe Width |  |  |
-| `--raid-level`, `--rl` | raidlevel |  | Raid Level (options: ['ec', 'lvm', '0', '1', '10'] |  |  |
-| `--number-of-mirrors` | integer |  | Number Of Mirrors |  |  |
-| `--crc-enabled` | flag |  | CRC Enabled |  |  |
-| `--encryption-header-size` | integer |  | Encryption Header Size |  | 16 |
-| `--stripe-size` | integer |  | Stripe Size |  |  |
-| `--ignore-node-separation` | flag |  | Ignore Node Separation |  |  |
-| `--domain` | text |  | Domain |  |  |
-| `--target-classes` | id/name |  | Target Classes |  |  |
-| `--parity-blocks` | integer |  | Parity Blocks |  |  |
+| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
 | `--capacity`, `-c` | size |  | Capacity |  |  |
-| `--is-encrypted` | flag |  | Is Encrypted |  |  |
+| `--encryption-header-size` | integer |  | Encryption Header Size |  | 16 |
+| `--protection-level` | ecseparationtype |  | Protection Level (options: ['ignore', 'full', 'minimal'] |  |  |
+| `--target-classes` | id/name |  | Target Classes |  |  |
+| `--raid-level`, `--rl` | raidlevel |  | Raid Level (options: ['ec', 'sec', 'lvm', '0', '1', '10'] |  |  |
 | `--drive-classes` | id/name |  | Drive Classes |  |  |
+| `--stripe-size` | integer |  | Stripe Size |  |  |
+| `--parity-blocks` | integer |  | Parity Blocks |  |  |
 | `--allow-overflow` | flag |  | Allow Overflow |  |  |
+| `--number-of-mirrors` | integer |  | Number Of Mirrors |  |  |
+| `--stripe-width` | integer |  | Stripe Width |  |  |
+| `--ignore-node-separation` | flag |  | Ignore Node Separation |  |  |
+| `--data-blocks` | integer |  | Data Blocks |  |  |
+| `--is-encrypted` | flag |  | Is Encrypted |  |  |
+| `--domain` | text |  | Domain |  |  |
+| `--crc-enabled` | flag |  | CRC Enabled |  |  |
 
 #### vpg delete
 
@@ -1377,6 +1396,14 @@ _Extend the size of a VPG_
 | `--name`, `-n` | id/name | Yes |  |  |  |
 | `--capacity`, `-c` | size | Yes | Capacity |  |  |
 | `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
+
+#### vpg reclaim
+
+_Reclaim VPG reserved space_
+
+| Argument | Type | Required | Description | Choices | Default |
+|----------|------|----------|-------------|---------|---------|
+| `--name`, `-n` | id/name | Yes |  |  |  |
 
 #### vpg show
 
@@ -1401,8 +1428,8 @@ _Update properties of an existing instance_
 | `--cli-property` | text |  | Enable future properties as --extra-property foo=bar |  |  |
 | `--description`, `-d` | text |  | Description |  |  |
 | `--vsgs`, `--volume-security-group` | id/name |  | VSGs |  |  |
-| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
 | `--name`, `-n` | id/name | Yes | Name |  |  |
+| `--allow-allocation-on-offline-drives` | flag |  | Allow Allocation On Offline Drives |  |  |
 
 ---
 

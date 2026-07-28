@@ -1,4 +1,4 @@
-# NVMesh v3.4.0 Module Params Guide
+# NVMesh v3.5.0 Module Params Guide
 
 <!--
 SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Table of Contents
 
-- [NVMesh v3.4.0 Module Params Guide](#nvmesh-v340-module-params-guide)
+- [NVMesh v3.5.0 Module Params Guide](#nvmesh-v350-module-params-guide)
   - [Table of Contents](#table-of-contents)
 - [Copyright and Trademark Information](#copyright-and-trademark-information)
 - [Preface](#preface)
@@ -45,7 +45,7 @@ We continually try to improve the quality and usefulness of documentation. If yo
 
 | Acronym | Description |
 | --- | --- |
-| Hidden volume | A hidden volume is volume attached to a client for the client to perform recovery operations on it. This should only happen on targets. <br>As volume is only attached for recovery by the storage system, it does not have a /dev device |
+| Recoverer volume | A recoverer volume is attached to a client only so the storage system can perform recovery operations on it. <br>It is not exposed to user space as a `/dev` device. |
 | NVLustre | Lustre-over-NVMesh. |
 | RDMA IO | This is IO executed using RoCE or Infiniband for communication. |
 | SIW | SoftiWarp, which provides an RDMA API, but performs communication over TCP without RDMA. <br>Often referred to as TCP in module parameter names. |
@@ -94,6 +94,7 @@ Tracer severities are defined by these values:
 | `disk_coremask_support` | Set to true to enable disk coremask support. Creates "disk_max_coremask_nrch" NRCHs per coremask added via block CLI. Updated on rediscover | `bool` | writable (`0644`) | `false` |
 | `disk_local_defer_block_cb` | Determines whether to defer local IO block cb to non-interrupt context. | `bool` | writable (`0644`) | `false` |
 | `disk_local_use_system_pcpu_wq` | Determines whether local IO uses the system per-cpu workqueue for requests. | `bool` | writable (`0644`) | `false` |
+| `disk_locks_ch_overflow_threshold` | Outstanding-op count on the address-sharded lock channel above which selection spills to the least-loaded channel. <=0 always spills (least-loaded), INT_MAX never spills (pure sharding). | `int` | writable (`0644`) | `32` |
 | `disk_locks_fast_reuse` | Reuse a disk lock (disk-lock opr) before calling the callback from releasing the lock (ulp cb). This is a boolean. This is a potential optimization. | `bool` | writable (`0644`) | `false` |
 | `disk_locks_use_system_pcpu_wq` | Defines whether disk locks use the system per-cpu workqueues for requests completion handling. | `bool` | read-only (`0444`) | `false` |
 | `disk_max_coremask_nrch` | Determines the maximum number of channels per coremask. Updated on rediscover. | `uint` | writable (`0644`) | `2` |
@@ -115,6 +116,8 @@ Tracer severities are defined by these values:
 | `ib_net_complete_iocmd_use_pcpu_wq` | Determines whether IB net complete iocmd use per-cpu workqueues for request handling. | `bool` | read-only (`0444`) | `false` |
 | `io_max_retry_encrypted_secs` | Encrypted volume max time to try and execute IO before failing it to OS [sec], if 0, use system's default | `uint` | writable (`0644`) | `300` |
 | `io_max_retry_secs` | Max time to try and execute IO before failing it to OS [sec], if 0, use system's default | `uint` | writable (`0644`) | `0` |
+| `io_throttle_metrics_trace_mask` | Bitmask of IO throttle metric traces to emit: bit0=event_count, bit1=latency_highres_histogram, bit2=reserved, bit3=number_of_throttled_ios. 0 disables all. | `uint` | writable (`0644`) | `11` |
+| `ioch_drained_timeout_sec` | The timeout in seconds for the IOCH drained event before disconnecting disk | `uint` | writable (`0644`) | `10` |
 | `ioch_ka_only_no_rdda` | Use only IO channels for IO keep alive messages, requires disk discovery to take effect. | `bool` | writable (`0644`) | `1` |
 | `iommu_enabled` | Informs the internal NVMesh NVMe driver that the IOMMU is enabled on the node. | `bool` | read-only (`0444`) | `false` |
 | `iterations` | Number of test loop iterations | `uint` | writable (`0644`) | `50000` |
@@ -122,11 +125,12 @@ Tracer severities are defined by these values:
 | `jam_max_used_entries` | Sets the maximum journal entries to be used by the JAM (journal allocation manager). | `uint` | writable (`0644`) | `0` |
 | `jam_non_free_entry_timeout` | JAM timeout for having a journal entry in a non-free state in seconds. | `ulong` | writable (`0644`) | `300` |
 | `jam_pending_enb` | Controls whether to enable or allow pending allocations on the JAM. | `bool` | writable (`0644`) | `true` |
-| `jam_pending_req_timeout_jif` | JAM timeout for pending allocation request in jiffies. If set to 0, use system default. | `ulong` | writable (`0644`) | `if defined(BLKDEV_SIMULATOR) && (BLKDEV_SIMULATOR==1) then (2 * HZ); otherwise (HZ / 5)` |
+| `jam_pending_req_timeout_jif` | JAM timeout for pending allocation request in jiffies. If set to 0, use system default. | `ulong` | writable (`0644`) | `if defined(BLKDEV_SIMULATOR) && (BLKDEV_SIMULATOR==1) then (HZ / 100); otherwise (HZ / 5)` |
 | `jam_use_system_pcpu_wq` | Determines whether the journal manager uses the system per-cpu workqueue for pending requests. | `bool` | read-only (`0444`) | `false` |
 | `local_io_use_md_dma_pool` | When a local IO request is made without providing space for the metadata buffer and the drive has metadata enabled, then this determines whether to use a preallocated pool of memory or to dynamically allocate memory per IO. | `bool` | writable (`0644`) | `true` |
 | `local_io_use_prpl` | Determines whether local IO requests use PRPLs instead of SGLs (see the NVMe standard for more information). PRPLs are needed for environments with the IOMMU enabled. | `bool` | writable (`0644`) | `true` |
 | `local_io_use_rd_md_pool` | Determines whether to use a preallocated pool or to dynamically allocate memory for metadata read operations, as the NVMe standard forces reading the block data with the metadata. | `bool` | writable (`0644`) | `true` |
+| `local_write_use_data_copy` | Copy write data to a DMA pool buffer before submitting to the drive. Prevents CRC mismatches when application modifies buffers during DMA. Automatically enabled for fake_4kpi drives. | `bool` | writable (`0644`) | `false` |
 | `lock_ch_2nd_ch_coremask` | Enable, disable or set whether to use secondary channels as coremasks channels. Possible values: 0 - Disabled, > 0 - Max number of channels per mask to connect,All other IOs use primary channel. | `uint` | writable (`0644`) | `0` |
 | `lock_ch_2nd_ch_pcpu` | Enable, disable or set the number of secondary lock channels as per-cpu lock channels. Offline CPUs within the configured CPUs range are not compensated for. Possible values: 0 = disabled, 1 = use max possible channels (min(num-cpus, 128)), Other value (when lock_ch_pcpu_cpus="") = cpu [0, i) use a per-cpu secondary-channel [0, i). Other cpus share the primary lock channel. | `uint` | writable (`0644`) | `0` |
 | `lock_ch_2nd_ch_pcpu_lockless` | Determines whether the per-CPU storage-level lock channels are run lockless compared to other threads and CPUs. This reduces contention and increases performance. NOTE: There must be a pcpu channel for all submission cores or it will fallback to the shared channels with locking. | `bool` | writable (`0644`) | `true` |
@@ -136,16 +140,19 @@ Tracer severities are defined by these values:
 | `lock_ch_scq_offload_thread` | Use a thread for offload processing for RDMA shared completion queue handling. | `bool` | writable (`0644`) | `true` |
 | `lock_ch_scq_offload_thread_tcp` | Use a thread for offload processing for SIW shared completion queue handling. | `bool` | writable (`0644`) | `true` |
 | `lock_ch_scq_use_kwq` | Determines whether to use kernel workqueue instead of kthread for SCQ offload processing. | `bool` | writable (`0644`) | `false` |
+| `lock_channel_metrics_mask` | Bitwise mask controlling which lock channel metrics to dump in periodic traces: bit 0 (0x01): lock_opr_count - lock operation count bit 1 (0x02): lock_opr_latency - lock operation latency histogram bit 2 (0x04): lock_opr_deferred_queue_length_max - max deferred queue length bit 3 (0x08): lock_opr_deferred_latency - deferred operation latency histogram Note: Proc file always shows all metrics regardless of this mask. Default: 0x0F (all metrics enabled) | `uint` | writable (`0644`) | `(LOCK_CH_METRIC_COUNT \| LOCK_CH_METRIC_LATENCY \| LOCK_CH_METRIC_DEFERRED_QUEUE_MAX \| LOCK_CH_METRIC_DEFERRED_LATENCY)` |
+| `lock_channel_periodic_timer_interval` | Interval in milliseconds for periodic lock channel usage metrics tracing per disk | `ulong` | writable (`0644`) | `10000` |
 | `lock_retry_delay_multiplier` | Lock retry timeout in microseconds when failing to obtain a lock. The retry timeout undergoes exponential backoff. | `uint` | writable (`0644`) | `(5000)` |
+| `lock_shard_type` | Lock shard type: 0) HASH_MODULO, 1) LOCKSET_MODULO | `uint` | writable (`0644`) | `0` |
 | `locks_scq_wq_unbound` | Determines whether to use an unbound kernel workqueue for nvmeibc_locks_scq (true) or a bound one (false). | `bool` | read-only (`0444`) | `false` |
 | `main_cpu` | CPU to pin main thread to | `int` | writable (`0644`) | `0` |
 | `management_report_frequency` | Report frequency for management, in seconds | `int` | writable (`0644`) | `5` |
 | `map_each_sg_entry` | IB DMA map each SG-entry separately. | `bool` | writable (`0644`) | `false` |
-| `map_sg_mode` | Defines the mode for mapping data SG lists: 0 = Combined, use global key when able to collapse all sg-entries to one, otherwise map-mr (map WR and rdma-write WR). 1 = Use only map-mr (IB_WR_REG_MR, IB_WR_FAST_REG_MR). 2 = Use only the global dma key, which means that multiple rdma-write WRs from clnt/srv in wr/rd, respectively, may be needed. The target must have enough WRs to write the data back for read operations. | `uint` | writable (`0644`) | `0` |
+| `map_sg_mode` | Defines the mode for mapping data SG lists: 0 = Combined, use global key when able to collapse all sg-entries to one, otherwise map-mr (map WR and rdma-write WR). 1 = Use only map-mr (IB_WR_REG_MR, IB_WR_FAST_REG_MR). 2 = Use only the global dma key, which means that multiple rdma-write WRs from clnt/srv in wr/rd, respectively, may be needed. The target must have enough WRs to write the data back for read operations. 3 = Combined, but use ib_map_mr_sg when mapping MR. 4 = Use only map-mr, but use ib_map_mr_sg() for the mapping | `uint` | writable (`0644`) | `3` |
 | `map_sg_result_trace` | Defines how to trace the result of mapping the data SG list: 0 = Disabled, 1 = One-shot (edge), 2 = Continuous (level) | `uint` | writable (`0644`) | `0` |
 | `max_ioch_path_fail` | Number of failures allowed per path in a connection cycle. | `int` | writable (`0644`) | `(1)` |
 | `max_ioch_rm_works` | Max concurrent IO communication channel removal operations. | `int` | writable (`0644`) | `0` |
-| `max_ios_per_cpu` | Maximum number of concurrent IO operations handled per core. Can be used to prevent IO flooding. In other words, the upper limit on the number of outstanding IOs to issue via the block driver per CPU core. Some file systems and applications queue or perform read-ahead very aggressively, likely to overcome problems with legacy storage solutions. With NVMesh, large numbers of outstanding read requests may lead to network congestion especially when target bandwidth exceeds client bandwidth. Throttling the number of outstanding requests using this parameter can reduce this congestion and improve overall quality of service. Limiting this value often ends up improving performance for the Client and others on the network. If in doubt, start with a value of 8. This setting can be applied dynamically to the kernel module without restarting services. | `uint` | writable (`0644`) | `64` |
+| `max_ios_per_cpu` | Maximum number of concurrent IO operations handled per core. Can be used to prevent IO flooding. In other words, the upper limit on the number of outstanding IOs to issue via the block driver per CPU core. Some file systems and applications queue or perform read-ahead very aggressively, likely to overcome problems with legacy storage solutions. With NVMesh, large numbers of outstanding read requests may lead to network congestion especially when target bandwidth exceeds client bandwidth. Throttling the number of outstanding requests using this parameter can reduce this congestion and improve overall quality of service. Limiting this value often ends up improving performance for the Client and others on the network. If in doubt, start with a value of 8. This setting can be applied dynamically to the kernel module without restarting services. | `uint` | writable (`0644`) | `default 64; default 16` |
 | `max_lock_channels` | The maximum number of lock channels for non-TCP transports per disk. | `uint` | writable (`0644`) | `5` |
 | `max_lock_channels_tcp` | The maximum number of lock channels for TCP transports per disk. | `uint` | writable (`0644`) | `16` |
 | `max_nic_srqs` | Maximum number of shared receive queues per NIC. | `int` | read-only (`0444`) | `16` |
@@ -163,14 +170,17 @@ Tracer severities are defined by these values:
 | `nr_defer_recv_comps` | Defer processing of IO completions for RDMA transports. | `bool` | writable (`0644`) | `true` |
 | `nr_defer_recv_comps_tcp` | Defer processing of IO completions for SIW transports. | `bool` | writable (`0644`) | `false` |
 | `nr_defer_recv_comps_use_kwq` | Determines whether to use a kernel workqueue for deferred receive completions on nordda channels. | `bool` | writable (`0644`) | `false` |
-| `nr_get_by_cpu_index` | (no MODULE_PARM_DESC found) | `uint` | writable (`0644`) | `0` |
-| `nr_get_by_cpu_index_tcp` | Get nrch based on CPU-index (for TCP): 0 - False, 1 - True, Other (>=2) - True and allow fallback to other select schemes | `uint` | writable (`0644`) | `1` |
+| `nr_get_by_cpu_index` | Get nrch based on CPU-index: 0 - False, 1 - True, Other (>=2) - True and allow fallback to other select schemes | `uint` | writable (`0644`) | `0` |
+| `nr_get_by_cpu_index_tcp` | Get nrch based on CPU-index (for TCP): 0 - False, 1 - True, Other (>=2) - True and allow fallback to other select schemes | `uint` | writable (`0644`) | `0` |
+| `nr_get_by_numa_node` | Get nrch based on NUMA-node: 0 - False, 1 - True and allow fallback to other select schemes | `uint` | writable (`0644`) | `1` |
+| `nr_get_by_numa_node_tcp` | Get nrch based on NUMA-node (for TCP): 0 - False, 1 - True and allow fallback to other select schemes | `uint` | writable (`0644`) | `1` |
 | `nr_get_least_used` | Get least used nrch (preceded by nr_get_by_cpu_index) | `bool` | writable (`0644`) | `false` |
 | `nr_max_channels_per_disk` | Maximum number of RDMA IO channels per disk. | `uint` | writable (`0644`) | `(64)` |
 | `nr_max_channels_per_path` | Maximum number of RDMA IO channels per disk per networking path. | `uint` | writable (`0644`) | `4` |
 | `nr_max_channels_per_path_iommu` | Maximum number of RDMA IO channels per disk per networking path when the IOMMU is enabled. | `uint` | writable (`0644`) | `4` |
 | `nr_max_channels_per_path_tcp` | Maximum number of SIW IO channels per disk per networking path. | `uint` | writable (`0644`) | `16` |
 | `nr_max_used_reqs_per_channel` | Maximum number of requests issued simultaneously on a channel. | `uint` | writable (`0644`) | `64` |
+| `nr_max_wrs_per_req` | The maximum number of WRs (RDMA work requests) per IO channel request, used for a write operation. For 0, use system's default. | `uint` | writable (`0644`) | `0` |
 | `nr_pcpu_ch_ll_cpus` | A list of CPU cores for lockless per-cpu IO RDMA channels. The format is as a hex-mask list of cores, where each entry is 32-bits. | `charp` | writable (`0644`) | `NULL` |
 | `nr_pcpu_ch_lockless` | Per-cpu RDMA IO channels are lockless. This reduces contention and increases performance, but requires a lot more channels typically. | `bool` | writable (`0644`) | `false` |
 | `nr_pcpu_channels_per_disk` | Connect per-cpu RDMA IO channels (up to 128) in addition to the nr_max_channels_per_disk any-cpu channels. The total number of channels between a client and a target's disk is limited by the lower of nr_max_channels_per_path on the Client and the Target. Typically set to true for kernel-based DPU usage. | `uint` | writable (`0644`) | `0` |
@@ -185,7 +195,14 @@ Tracer severities are defined by these values:
 | `nr_wd_rescue_timeout` | IO watchdog rescue timeout in jiffies. An IO watchdog rescue is an attempt to handle any missed receive interrupts even though there was no interrupt. This functionality was an escape and is considered unnecessary. A value under 1 second disables this functionality. | `ulong` | writable (`0644`) | `0` |
 | `nvmeibc_copy_bio_buffers` | Copy bio buffers in writes. Should be on except for specific file systems that never write into a buffer during IO. | `bool` | writable (`0644`) | `true` |
 | `nvmeibc_debug_ram_binfo` | Enforce detection of topological data corruptions in RAM. | `bool` | writable (`0644`) | `true` |
+| `nvmeibc_debug_ram_unknown_dbits` | Enforce detection of too much unknown dbits relative to degraded mode | `bool` | writable (`0644`) | `true` |
 | `nvmeibc_default_debug_di` | Upon volume attach, enable "debug di" mode. | `bool` | writable (`0644`) | `false` |
+| `nvmeibc_dp_alloc_allow_io` | Do not use GFP_NOIO for data path memory allocations | `bool` | writable (`0644`) | `false` |
+| `nvmeibc_io_pet_buffer_size` | IO per-entity trace buffer size. | `uint` | writable (`0644`) | `4096` |
+| `nvmeibc_io_pet_disable` | A non-zero value will disable IO per-entity trace functionality. | `uint` | writable (`0644`) | `1` |
+| `nvmeibc_io_pet_max_traced_ops_per_cpu` | Maximum concurrently traced IO PET operations per CPU. 0 = unlimited. | `uint` | writable (`0644`) | `256` |
+| `nvmeibc_io_pet_minimal_severity` | Defines the minimal severity for IO per-entity trace buffers to be written. | `uint` | writable (`0644`) | `2` |
+| `nvmeibc_io_pet_verbose` | A non-zero value will allow IO per-entity trace buffers to provide even more information such as the first 8 bytes and metadata for every block. This may hurt performance and the buffer size should be taken into account. | `uint` | writable (`0644`) | `0` |
 | `nvmeibc_jentry_num_blocks` | Length of erasure coding journal, in blocks. For erasure coding volumes, increasing this means fewer parallel write IO operations, but more efficient large writes. It is highly recommended to increase for use cases with large writes. Range is 1 to 16. | `uint` | writable (`0644`) | `16` |
 | `nvmeibc_jmd_wr_version` | Version of JMD (journal metadata) to use to facilitate backwards compatibility: 0 = packed, 1 = unpacked. | `uint` | writable (`0644`) | `(1)` |
 | `nvmeibc_should_sync_reuse_memory` | Reuse pages across syncs (internal storage recovery operations) to reduce the number of page allocations and deallocations. | `bool` | writable (`0644`) | `true` |
@@ -202,13 +219,13 @@ Tracer severities are defined by these values:
 | `prefix_priority_masks_rediscover_on_new` | Determines whether to rediscover when a new common prefix priority is found. | `bool` | writable (`0644`) | `false` |
 | `profiling_enabled` | Enable statistics gathering, should be turned off if the clocksource is not tsc. | `bool` | writable (`0644`) | `true` |
 | `qa_ec_stress_debug` | For QA only! Stresses the EC datapath. | `bool` | writable (`0644`) | `false` |
+| `rdda_pois_bb` | Poison RDDA remote buffer before read | `bool` | writable (`0644`) | `true` |
 | `recovery_debug_level` | This determines the level of tracing for recovery operations for this module. Only traces with this level or lower will be issued, see tracer severities above. | `int` | writable (`0644`) | `if defined(NVMESH_IS_PRODUCTION_COMPILATION) && (NVMESH_IS_PRODUCTION_COMPILATION==1) then 3; otherwise 4` |
 | `recovery_iterator_cooldown` | Recovery iterator timeout to wait after completing full recovery cycle in jiffies. Increasing this trades recovery load vs. recovery time. | `ulong` | writable (`0644`) | `1` |
 | `reject_all_volume_attaches` | Autofail all volume attaches, prevent kernel crashes on wrong MCS/mgmt messages | `uint` | writable (`0644`) | `0` |
 | `restart_io_timeout_secs` | Time in seconds to wait between full cycles of IO channels reconnection. Upon a disconnection, reconnection attempts will be more often and exponentially backoff as needed up to this value. | `uint` | writable (`0644`) | `(30)` |
 | `resub_awake_throttle_sleep_ms` | Resubmit thread's sleep time for throttling, in milliseconds. Should be in the order of scheduler process switching. | `ulong` | writable (`0644`) | `(10)` |
 | `resub_awake_throttle_threshold_ms` | Resubmit thread's threshold for throttling, in milliseconds. The thread will yield after running for this amount of time. | `ulong` | writable (`0644`) | `(1000)` |
-| `self_recovery_detach_carrier_grace_time_sec` | Do not self detach recovery carrier volume if no rider uses it yet for this time [sec] | `uint` | writable (`0644`) | `10` |
 | `self_recovery_detach_idle_time_sec` | Time-out for idle recoverer volume (after recovery finished) until self detached [sec] | `uint` | writable (`0644`) | `60` |
 | `self_recovery_detach_initial_time_sec` | Time-out for just attached idle recoverer volume until self detached [sec] | `uint` | writable (`0644`) | `5` |
 | `skip_disk_iocmds_flags` | This is an unsafe debug mode. Skip disk access (remote and local): 0 = Disabled, 1 = Skip read operations, 2 = Skip write operations, 3 = Skip read & write operations, 4 = Skip journal write operations or any combination using this operation, 5 = Skip all IO operations including those not mentioned above. Used for performance tuning and debugging. | `uint` | writable (`0644`) | `0` |
@@ -242,17 +259,19 @@ Tracer severities are defined by these values:
 | `completion_noise_enabled` | Enable completion noise statistics collection | `bool` | read-only (`0444`) | `false` |
 | `completion_noise_measurement_interval_ms` | Measurement interval in milliseconds for noise statistics | `uint` | read-only (`0444`) | `55` |
 | `cq_vec_flags` | CQ (completion queue) completion-vector selection flags, as follows: Bit 0: Reserve vec 0 for userspace. Bit 1: Index based, set by CQ creator. Bit 2: Use the same vector for SCQ/RCQ. | `uint` | writable (`0644`) | `0` |
-| `cq_vec_flags_tcp` | Same as cq_vec_flags for TCP (SIW) completion queues. | `uint` | writable (`0644`) | `2` |
+| `cq_vec_flags_tcp` | Same as cq_vec_flags for TCP (SIW) completion queues. | `uint` | writable (`0644`) | `4` |
 | `cq_vec_snd_rcv_delta` | If cq_vec_flags (see above) is set to use index-based selection for the vector, then this value will be the delta between the send and receive queue's vector. | `uint` | writable (`0644`) | `0` |
 | `cq_vec_snd_rcv_delta_tcp` | Same as cq_vec_snd_rcv_delta for TCP (SIW) completion queues. | `uint` | writable (`0644`) | `0` |
 | `debug_level` | Enables debug logging (to the system log not NVMesh tracer) if set above 1. | `int` | writable (`0644`) | `(int)1` |
+| `fr_pool_percpu_cache` | Enable per-cpu cache for fast registration pool | `bool` | read-only (`0444`) | `true` |
+| `fr_pool_percpu_high` | Spill threshold for per-cpu cache for fast registration pool | `uint` | read-only (`0444`) | `128` |
+| `fr_pool_percpu_idle_timeout_ms` | Idle timeout for per-cpu cache for fast registration pool in milliseconds | `uint` | read-only (`0444`) | `1000` |
+| `fr_pool_percpu_low` | Refill target for per-cpu cache for fast registration pool | `uint` | read-only (`0444`) | `64` |
+| `fr_pool_percpu_rebalance_min_interval_ms` | Rebalance per-cpu cache minimum interval in milliseconds | `uint` | read-only (`0444`) | `1000` |
 | `ib_cross_subnet` | Enable cross subnet, IB transport | `bool` | writable (`0644`) | `false` |
 | `intr_shaper_max_burst` | Defines the maximum number of recv completions to handle in an interrupt before entering poll mode. | `uint` | writable (`0644`) | `(64)` |
-| `intr_shaper_max_burst_tcp` | Same as intr_shaper_max_burst, but used when tcp_mode != 0. | `uint` | writable (`0644`) | `(64)` |
 | `intr_shaper_max_irq_time_usecs` | Defines the maximum time to spend in an interrupt before entering poll mode. | `uint` | writable (`0644`) | `(2000)` |
-| `intr_shaper_max_irq_time_usecs_tcp` | Same as intr_shaper_max_irq_time_usecs, but used when tcp_mode != 0. | `uint` | writable (`0644`) | `(2000)` |
 | `intr_shaper_max_pct_cpu` | Defines the maximum percentage of CPU time to spend processing completions in an interrupt before entering poll mode. | `uint` | writable (`0644`) | `(20)` |
-| `intr_shaper_max_pct_cpu_tcp` | Same as intr_shaper_max_pct_cpu, but used when tcp_mode != 0. | `uint` | writable (`0644`) | `(4)` |
 | `ipv6_mode` | IPv6 Mode: 0 - No IPv6, 1 - IPv6 enabled, prefer IPv4 addresses, 2 - IPv6 enabled and preferred, 3 - IPv6 Only | `uint` | writable (`0644`) | `1` |
 | `iwarp_cm_inv_time_sec` | Timeout for iWARP CM Invalidate (in seconds | `uint` | writable (`0644`) | `30` |
 | `iwarp_find_path_sock` | Use a socket for iwarp_find_path. Reduces load on siw_cm_wq | `bool` | writable (`0644`) | `true` |
@@ -276,9 +295,9 @@ Tracer severities are defined by these values:
 | `pcpu_wq_debug_level` | Set trace level for nvmeib_pcpu_wq | `int` | writable (`0644`) | `4` |
 | `qp_retry_cnt` | QP retry count | `uint` | writable (`0644`) | `7` |
 | `qp_timeout` | QP timeout (4.096 x 2^N) us | `uint` | writable (`0644`) | `14` |
+| `relax_timeouts` | Multiplier for default control path timeouts (0 - unset) | `uint` | writable (`0644`) | `0` |
 | `tcp_base_port_id` | The first (base) port ID for secondary SIW (iWARP) listeners. | `uint` | read-only (`0444`) | `7915` |
-| `tcp_mode` | Is TCP mode enabled? 0 = no, 1 = yes | `uint` | read-only (`0444`) | `0` |
-| `tcp_num_ports` | The number of secondary SIW (iWARP) TCP ports. 0 = number of CPUs. | `uint` | read-only (`0444`) | `16` |
+| `tcp_num_ports` | TCP: Secondary iWARP listeners number of TCP ports (0 = number of RX Queues or number of online CPUs) | `uint` | read-only (`0444`) | `0` |
 | `tracer_debug_level` | This determines the level of tracing for this module. Only traces with this level or lower will be issued, see tracer severities above. | `int` | writable (`0644`) | `3` |
 
 ## nvmeib_common_public
@@ -308,9 +327,14 @@ Tracer severities are defined by these values:
 | `disk_collect_stats` | Enable collecting statistics for disk operations. Can be used for performance optimization. | `bool` | writable (`0644`) | `true` |
 | `distr_intr_program` | Path to the interrupt distribution program | `string` | writable (`0600`) | `"/opt/nvmesh/common-repo/scripts/" "/nvmesh_set_irq_affinity"` |
 | `dummy_id` | Serial ID to be used for drives on drive-less targets. Dummy drives are rarely needed, only for an arbiter on a 2-node system. | `charp` | read-only (`0444`) | `NULL` |
+| `emulate_4kpi` | Dev only. Emulate 4096+8 format on 512b-only drives by mapping each 4K+8 LBA to 9x512b LBAs. | `bool` | read-only (`0444`) | `false` |
+| `fake4kpi_integrity` | Integrity check for fake4kpi sectors: none, crc32c, crc32, xxhash, xor (default: crc32) | `charp` | read-only (`0444`) | `"crc32"` |
+| `fake4kpi_md_size` | Metadata size in bytes for fake4kpi (8, 16, 32, 64; default: 8) | `int` | read-only (`0444`) | `8` |
+| `fake4kpi_ring_size` | Per-queue bounce buffer ring size for fake4kpi (0 = auto-size to queue depth) | `int` | read-only (`0444`) | `0` |
 | `fake_large_disk_size_lba` | Do not use for production systems. The size of fake large disks, in 4k units. | `ullong` | read-only (`0444`) | `((uint64_t)1 << ((32) + 1))` |
 | `fake_large_disks` | Do not use for production systems. Fake the system having larger disks by overriding their size. This is used for developing support for larger drives. | `bool` | read-only (`0444`) | `false` |
 | `fake_serial` | Do not use for production systems. Fake serial number for a fake NVMe drive, which should be machine specific. | `charp` | read-only (`0444`) | `NULL` |
+| `force_fake4kpi` | Dev only. Force fake4kpi on drives that support native 4k+8 but are currently formatted to 512b+0. | `bool` | read-only (`0444`) | `false` |
 | `format_timeout_seconds_seconds_try` | (no MODULE_PARM_DESC found) | `int` | writable (`0644`) | `3600` |
 | `gcp_drives_to_uuid_list` | Related to GCP mode, i.e., specifically for GCP virtual NVMe drives. This provides a list of UUIDs of drives to be used. This should be provided on module invocation, i.e., during Target service startup. | `charp[]` | read-only (`0444`) | `(no explicit initializer)` |
 | `gcp_mode` | Use only drives that are specified in gcp_drives_to_uuid_list. | `bool` | writable (`0644`) | `false` |
@@ -342,6 +366,7 @@ Tracer severities are defined by these values:
 | `nr_skip_disk_access` | Unsafe debug mode. Skip local disk access, i.e., complete disk operations immediately instead of performing them for remote IO operations. Used for debugging and performance optimization. | `bool` | writable (`0644`) | `false` |
 | `nr_skip_rdma_write_back` | Unsafe debug mode. Skip performing the RDMA write-back usually done for disk read operations for remote IO operations. Used for debugging and performance optimization. | `bool` | writable (`0644`) | `false` |
 | `nr_wq_set_cpu_affinity` | Set CPU affinity of IO communication work queues, based on channel index. | `bool` | writable (`0644`) | `false` |
+| `nvme_disk_periodic_timer_interval` | Interval in milliseconds for periodic timer per disk | `callback` | writable (`0644`) | `(not found)` |
 | `nvme_doorbell_batch` | Determines whether to batch NVMe doorbell requests. | `bool` | writable (`0644`) | `true` |
 | `nvme_number_offset` | Offset for /dev/nvme%d device names. | `int` | read-only (`0444`) | `1000` |
 | `nvme_wq_unbound` | Determines whether to use an unbound kernel workqueue for nvmeibs_nvme (true) or a bound one (false), relevant only if use_nvme_kwq = true. | `bool` | read-only (`0444`) | `false` |
@@ -368,7 +393,6 @@ Tracer severities are defined by these values:
 | `tcp_port_prio` | Defines the priority of SIW. Enables overriding the form of network transportation to prefer. See ib_port_prio and roce_port_prio also. | `uint` | writable (`0644`) | `20` |
 | `tracer_debug_level` | This determines the level of tracing for this module. Only traces with this level or lower will be issued, see tracer severities above. | `int` | writable (`0644`) | `4` |
 | `use_intr_shaper` | Determines whether to use an interrupt shaper for NVMe completions. | `bool` | writable (`0644`) | `true` |
-| `use_intr_shaper_tcp` | Same as use_intr_shaper, but applied when running in TCP-only mode. | `bool` | writable (`0644`) | `false` |
 | `use_nvme_kwq` | Determines whether to use a kernel workqueue instead of a wakeup thread for processing completion queues. | `bool` | read-only (`0444`) | `false` |
 | `use_pcpu_cq` | Use a per-cpu shared completion queue (SCQ) and shared receive queue (SRQ). | `bool` | read-only (`0444`) | `false` |
 
@@ -387,18 +411,21 @@ Tracer severities are defined by these values:
 | `low_delay_tx_cpu_set` | bitmap of tx-cpus thread in tight loop (ulong). | `ulong` | writable (`0644`) | `-1` |
 | `mpa_crc_required` | MPA CRC required (bool). | `bool` | writable (`0644`) | `(no explicit initializer)` |
 | `mpa_crc_strict` | MPA CRC off enforced (bool). | `bool` | writable (`0644`) | `true` |
+| `mr_min_page_4k` | Advertise 4 KiB as the minimum MR page size in page_size_cap, even when the kernel PAGE_SIZE is larger (bool, default true). | `bool` | writable (`0644`) | `true` |
 | `notify_on_wq` | Notify CQ on Workqueue (bool). | `bool` | writable (`0644`) | `true` |
 | `panic_on_rx_err` | Panic on RX Error (bool). | `bool` | writable (`0644`) | `false` |
 | `panic_remote_on_rx_err` | Panic remote on RX Error (bool) using TCP OOB. | `bool` | writable (`0644`) | `false` |
+| `relax_timeouts` | Multiplier for default timeouts (0 - unset) | `uint` | writable (`0644`) | `0` |
 | `siw_cm_err_inj` | SIW CM error injection bits via FOREACH_SIW_CM_ERR_INJ(SIW_CM_ERR_INJ_BIT_MODPARAM_DESC). Not for production use! | `ulong` | writable (`0644`) | `0` |
 | `sock_buff_sz` | Socket buffers size in bytes. | `int` | writable (`0644`) | `65536` |
 | `tcp_nodelay` | Set TCP NODELAY (bool). | `bool` | writable (`0644`) | `true` |
 | `tcp_quickack` | Set TCP QUICKACK (bool). | `bool` | writable (`0644`) | `true` |
-| `tx_cpu_list` | List of CPUs siw TX thread shall be bound to (format: comma separated no spaces) (string). | `string` | read-only (`0444`) | `""` |
+| `tx_cpu_list` | List of CPUs siw TX thread shall be bound to (format: comma separated no spaces) | `string` | read-only (`0444`) | `""` |
+| `tx_cpus` | TX CPU selection: 0=tx_cpu_list, 1=all CPUs, 2=NUMA local to NIC when choosing TX thread | `int` | read-only (`0444`) | `1` |
 | `tx_flags_from_upstream` | Tx flags from upstream... | `bool` | writable (`0644`) | `false` |
 | `tx_flags_use_eor` | Tx flags from upstream use EOR... | `bool` | writable (`0644`) | `false` |
+| `tx_one_ht_per_core` | Use only one hyperthread per physical core for TX threads | `bool` | read-only (`0444`) | `false` |
 | `tx_thread_high_prio_bmp` | A bitmap of CPU Tx Threads to set to high priority. | `ulong` | writable (`0644`) | `0` |
-| `use_pbe_fixed_size` | Use fixed size buffers. | `bool` | writable (`0644`) | `false` |
 | `use_so_incoming_cpu` | Set the RX CPU of socket to RCQ's comp-vector index (after connect/accept). | `bool` | writable (`0644`) | `true` |
 | `wait_rqe_delay_ms` | Delay to wait on empty S(RQ) (in ms) (int). | `int` | writable (`0644`) | `10` |
 | `wait_rqe_max_retries` | Number of retries on empty S(RQ) (int). | `int` | writable (`0644`) | `10` |

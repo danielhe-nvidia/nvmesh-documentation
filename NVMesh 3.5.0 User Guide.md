@@ -1,13 +1,13 @@
-# NVMesh 3.4.0 User Guide
+# NVMesh 3.5.0 User Guide
 
 <!--
 SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 -->
 
-[![Release](https://img.shields.io/badge/Release-v3.4-brightgreen)](./ROADMAP.md)
+[![Release](https://img.shields.io/badge/Release-v3.5-brightgreen)](./ROADMAP.md)
 
-- [NVMesh 3.4.0 User Guide](#nvmesh-340-user-guide)
+- [NVMesh 3.5.0 User Guide](#nvmesh-350-user-guide)
 - [Copyright and Trademark Information](#copyright-and-trademark-information)
 - [Preface](#preface)
 - [Acronyms and Terms](#acronyms-and-terms)
@@ -39,12 +39,14 @@ SPDX-License-Identifier: Apache-2.0
       - [RAID-0 Volumes, Single Target](#raid-0-volumes-single-target)
       - [RAID-0 Volumes, Multiple Targets](#raid-0-volumes-multiple-targets)
     - [Mirrored RAID-1 Volumes](#mirrored-raid-1-volumes)
+      - [Three-copy Mirrored RAID-1 Volumes](#three-copy-mirrored-raid-1-volumes)
     - [Striped \& Mirrored RAID-10 Volumes](#striped--mirrored-raid-10-volumes)
     - [Erasure-coded Volumes](#erasure-coded-volumes)
       - [RAID-6 (6+2) Logical Volumes with Single Node Failure Protection](#raid-6-62-logical-volumes-with-single-node-failure-protection)
       - [RAID-6 (8+2) Logical Volumes with Dual Node Failure Protection](#raid-6-82-logical-volumes-with-dual-node-failure-protection)
       - [Supported Erasure-coded Volume Combinations](#supported-erasure-coded-volume-combinations)
       - [Target Node Redundancy](#target-node-redundancy)
+    - [Striped Erasure-coded Volumes](#striped-erasure-coded-volumes)
   - [Access Modes](#access-modes)
   - [Zones](#zones)
   - [Minimal Configurations](#minimal-configurations)
@@ -269,6 +271,7 @@ SPDX-License-Identifier: Apache-2.0
   - [Hardware Operations](#hardware-operations)
     - [Drive Failure \& Replacement](#drive-failure--replacement)
       - [Evicting a Drive](#evicting-a-drive)
+      - [Reinstating a Drive](#reinstating-a-drive)
       - [Volume Rebuild](#volume-rebuild)
     - [NIC Failure and Replacement](#nic-failure-and-replacement)
       - [General](#general)
@@ -704,11 +707,13 @@ alt="Diagram of the layout of RAID-0 volumes across multiple targets." />
 
 ### Mirrored RAID-1 Volumes
 
-A mirrored RAID-1 volume consists of an exact copy or mirror of a set of data on two or more drives. Data is always separated drive-wise. It is optional whether to separate across nodes. Other separation constraints can be set using protection domains.
+A mirrored RAID-1 volume consists of exact copies, or mirrors, of a set of data on two or more drives. Data is always separated drive-wise. It is optional whether to separate across nodes. Other separation constraints can be set using protection domains.
 
-**<u>Note:</u>** It is planned to enable more than 2 copies of data in an upcoming version.
+Starting with NVMesh 3.5.0, a RAID-1 volume can be created with two or three mirror copies. The default mirrored layout uses two copies. Three-copy mirroring provides an additional copy for environments that require higher availability.
 
-If the required volume capacity is larger than the drives or the segments of available space on the current drives, space will be allocated from additional drive pairs and concatenated logically in mirrored pairs serially, as in the description of concatenated volumes.
+If the required volume capacity is larger than the drives or the segments of available space on the current drives, space will be allocated from additional drive pairs and concatenated logically in mirrored sets serially, as in the description of concatenated volumes.
+
+The following examples show the default two-copy layout.
 
 <div align="center"><img src="./ug-media/image7.png" style="width:6.5in;height:2.11111in"
 alt="Diagram of mirrored volumes." />
@@ -731,13 +736,23 @@ alt="Diagram of mirrored volumes." />
   - Random (4K) write performance across the entire volume LBA range is limited to 2 drives.
   - Random (4K) write performance on limited LBA ranges is equivalent to that of 1 drive.
 
-- Volume capacity overhead is 100%, i.e., the volume size is equivalent to 50% of the allocated physical space.
+- For the default two-copy layout, volume capacity overhead is 100%, i.e., the volume size is equivalent to 50% of the allocated physical space.
 
 - These volumes can remain online if any one drive fails, or either target host fails. In this degraded mode, write performance is the same while read performance is cut in half.
 
+#### Three-copy Mirrored RAID-1 Volumes
+
+A three-copy mirrored RAID-1 volume maintains three identical copies of the data on separate drives. When separation is configured, NVMesh places the copies on different target hosts or protection domains according to the selected VPG.
+
+Three-copy mirroring is intended for environments that require higher data availability than the default two-copy mirror. A three-copy mirrored volume can remain online after the loss of up to two mirror copies, as long as at least one valid copy remains available. The additional protection increases capacity overhead: the usable volume size is equivalent to one third of the allocated physical space.
+
+In the GUI and REST API, set **Number of Mirrors** to **2** when creating the volume. Select a mirrored VPG that can provide enough drives and separation for all mirror copies.
+
 ### Striped & Mirrored RAID-10 Volumes
 
-A striped and mirrored RAID-10 volume is simultaneously striped across multiple drives with a fixed stripe width and mirrored across drives, typically across different nodes. Separation is handled in the same manner as for RAID-1 volumes.
+A striped and mirrored RAID-10 volume is simultaneously striped across multiple drives with a fixed stripe width and mirrored across drives, typically across different nodes. Separation is handled in the same manner as for RAID-1 volumes. Starting with NVMesh 3.5.0, RAID-10 volumes can also be created with two mirror copies by setting the number of mirrors to 2.
+
+The following examples show the default two-copy layout.
 
 <div align="center"><img src="./ug-media/image8.png" style="width:6.5in;height:2.125in"
 alt="A diagram of striped and mirrored RAID-10 volumes across multiple nodes." />
@@ -753,11 +768,11 @@ alt="A diagram of striped and mirrored RAID-10 volumes across multiple nodes." /
   - Sequential and random (4K) write performance of the single volume is the up to the aggregate performance of 2 drives.
   - Sequential and random (4K) read performance of the single volume is up to the aggregate performance of 4 drives.
 
-- Volume capacity overhead is 100%, as the volume size is equivalent to 50% of the allocated segments.
+- For the default two-copy layout, volume capacity overhead is 100%, as the volume size is equivalent to 50% of the allocated segments. With three mirror copies, the usable volume size is equivalent to one third of the allocated segments.
 
-- Stripe height is 128K. This means that data is mapped round robin across 32 × 4K blocks (128K) to a pair of mirrored drive segments before continuing to the next drive pair.
+- Stripe height is 128K. This means that data is mapped round robin across 32 × 4K blocks (128K) to a mirrored set of drive segments before continuing to the next mirrored set.
 
-- RAID-10 volumes can remain online if any one drive fails, or either target host fails. In degraded mode, write performance is the same while read performance is reduced due to the loss of the failed drives.
+- RAID-10 volumes can remain online as long as at least one mirror copy remains available for each stripe member. In degraded mode, write performance is the same while read performance is reduced due to the loss of the failed drives.
 
 ### Erasure-coded Volumes
 
@@ -838,6 +853,18 @@ RAID-6 volumes protect against both drive and host failures. The minimum number 
 | --- | --- | --- | --- |
 | 6+2 | 8 targets | 4 targets | 1 target |
 | 8+2 | 10 targets | 5 targets | 1 target |
+
+### Striped Erasure-coded Volumes
+
+Striped erasure-coded volumes combine RAID-0 striping with erasure coding. In the GUI and REST API, this volume type is called **Striped Erasure Coding**. In client and target status output, a dual-parity striped erasure-coded volume is reported as **RAID-60** or **R60**.
+
+A RAID-60 volume is made of multiple erasure-coded protection groups. Each group uses the same data and parity layout as an erasure-coded volume, such as 8+2. NVMesh stripes the logical address space across those groups, allowing a single volume to use more drives in parallel while retaining parity protection inside each group.
+
+The stripe width defines how many erasure-coded groups are striped together. The minimum number of drives required is calculated as `(data blocks + parity blocks) x stripe width`. For example, the built-in `DEFAULT_STRIPED_EC_DUAL_TARGET_REDUNDANCY_VPG` creates an 8+2 striped erasure-coded volume with stripe width 2 and full target separation. Such a volume requires drive space from at least 20 drives spread across at least 10 targets. Its usable capacity is 80% of the allocated physical capacity, the same 25% overhead as an 8+2 erasure-coded group.
+
+For best results, create striped erasure-coded volumes with a size that is aligned to the full stripe layout so that capacity can be distributed evenly across the erasure-coded groups.
+
+Use striped erasure-coded volumes when a single protected volume needs higher aggregate throughput than one erasure-coded group can provide. The same drive-format and protection-domain considerations that apply to erasure-coded volumes also apply to striped erasure-coded volumes.
 
 ## Access Modes
 
@@ -1195,7 +1222,7 @@ For a more elaborate calculation, see the [NVMesh Memory Calculator](https://doc
 
 #### Supported NVMe Devices
 
-Drives not explicitly listed in the [NVMesh 3.4.0 Interoperability Matrix - Drive Interoperability](https://github.com/NVIDIA/nvmesh-documentation/blob/3.4.0/NVMesh%203.4.0%20Interoperability%20Matrix.md#drive-interoperability) have not been tested and may not function correctly. A new model that is a newer version in a family of drives that have been tested is highly likely to function properly.
+Drives not explicitly listed in the [NVMesh 3.5.0 Interoperability Matrix - Drive Interoperability](https://github.com/NVIDIA/nvmesh-documentation/blob/3.5.0/NVMesh%203.5.0%20Interoperability%20Matrix.md#drive-interoperability) have not been tested and may not function correctly. A new model that is a newer version in a family of drives that have been tested is highly likely to function properly.
 
 #### Drive Sector Size
 
@@ -1239,13 +1266,13 @@ Kafka is used for communication between management and all other components.
 
 The following non-NVMesh packages are required for management servers, i.e., for the `nvmesh-management` package:
 
-- mongodb-mongosh v2.1 – 7.0
+- mongodb-mongosh v2.x – < 3.0.0
 
-- mongodb-org-tools v5.0 – 7.0
+- mongodb-org-tools v5.0 – < 9.0
 
 - nodejs v1:17.0 – 2:18.0
 
-This version of NVMesh is compatible with Mongo versions 5.0 – 7.0.
+This version of NVMesh is compatible with Mongo versions 5.0 – 8.0.
 
 This version of NVMesh is compatible with NodeJS version 18.
 
@@ -1263,7 +1290,7 @@ Non-NVMesh package dependencies for Red Hat Enterprise Linux (RHEL) 8.x and comp
 | --- | --- |
 | nvmesh-base | ethtool <br> smartmontools <br> util-linux |
 | nvmesh-client | nvmesh-base <br> xz |
-| nvmesh-target | nvmesh-client + <br> 2.13.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
+| nvmesh-target | nvmesh-client + <br> librdkafka >= 2.6.0, Recommended: 2.13.0 <br> pciutils |
 
 For RDMA environments, on service startup, the following packages are required:
 
@@ -1300,7 +1327,7 @@ Non-NVMesh package dependencies for the Ubuntu 22.04 distribution are presented 
 | --- | --- |
 | nvmesh-base | ethtool <br> smartmontools <br> util-linux |
 | nvmesh-client | nvmesh-base <br> xz-utils |
-| nvmesh-target | nvmesh-client <br> 2.13.0 >= librdkafka >= 1.6.1, Recommended: > 2.1.2 <br> pciutils |
+| nvmesh-target | nvmesh-client <br> librdkafka >= 2.6.0, Recommended: 2.13.0 <br> pciutils |
 
 In addition, for RDMA environments, on service startup, the following are required:
 
@@ -1313,7 +1340,7 @@ In addition, for RDMA environments, on service startup, the following are requir
 
 #### Operating System
 
-Supported operating system versions and the associated kernels can be found in the [NVMesh 3.4.0 Interoperability Matrix - Operating System Interoperability](https://github.com/NVIDIA/nvmesh-documentation/blob/3.4.0/NVMesh%203.4.0%20Interoperability%20Matrix.md#operating-system-interoperability).
+Supported operating system versions and the associated kernels can be found in the [NVMesh 3.5.0 Interoperability Matrix - Operating System Interoperability](https://github.com/NVIDIA/nvmesh-documentation/blob/3.5.0/NVMesh%203.5.0%20Interoperability%20Matrix.md#operating-system-interoperability).
 
 #### NVIDIA (Mellanox) OFED
 
@@ -1541,19 +1568,19 @@ The **`cq_vec_flags_tcp`** parameter on the NVMesh common module (`nvmeib_common
 
 These are **starting points**, not universal rules—always measure with representative I/O.
 
-- **Many CPU cores**
+- **Many CPU cores**  
   You can often increase **`TCP_NUM_RX_QUEUE`** and **`TCP_NUM_CHANNELS`** (within NIC and driver limits) so traffic and completions spread across more queues and CPUs. Prefer a **NUMA-aware** **`TCP_RX_CPU_AFFINITY_DOMAIN`** (for example `pernuma` or an explicit list of CPUs local to the NIC) to avoid remote-memory access. For receive-side spreading, see [Flow steering, RSS, and multi-port listeners](#flow-steering-rss-and-multi-port-listeners): default **`TCP_FLOW_STEER`** relies on **RSS** and multi-port listeners; **`TCP_FLOW_STEER="ntuple"`** can improve steering when your hardware supports it. Consider **`TCP_RPS_MODE`** as well; incorrect combinations can hurt latency, so change one dimension at a time.
 
-- **Small number of cores**
+- **Small number of cores**  
   Use **fewer RX queues** and **lower channel counts** so you do not spread work across more CPUs than exist or starve application threads. **`persocket`** or a **short explicit CPU list** for **`TCP_RX_CPU_AFFINITY_DOMAIN`** is often appropriate. On **clients**, you can cap TCP channel usage with the **`nvmeibc`** module parameters **`nr_max_channels_per_path_tcp`** (maximum IO channels per path for TCP) and **`max_lock_channels_tcp`** (maximum lock channels per disk for TCP, including secondary channels). Lower values reduce connection and locking parallelism—appropriate when core count is low. See [Module Parameters](#module-parameters). If hyper-threads contend on the same physical core, consider pinning workloads or reducing parallelism so pairs of hyper-threads are not saturated by competing work. Avoid aggressive RPS unless you have verified IRQ load.
 
-- **One NIC per NUMA node (multi-NIC)**
+- **One NIC per NUMA node (multi-NIC)**  
   Treat each NIC as a **separate NUMA domain**: use **`pernuma`** (or per-device CPU lists) so each interface’s steering stays on the local socket.
 
-- **Single NIC**
+- **Single NIC**  
   A single interface must carry all traffic; balance **queue count** with **core count** and leave headroom for the OS and NVMesh userspace. **`persocket`** or **`fullspread`** may apply depending on whether you want to concentrate on one socket or use both sockets on dual-socket servers—profile both if the NIC is attached to one NUMA node. If IRQ affinity is managed by another tool (for example vendor tuning), set **`TCP_RX_SET_IRQ_AFFINITY`** to `No` and avoid double-configuration.
 
-- **Manual IRQ/RPS tuning**
+- **Manual IRQ/RPS tuning**  
   If you already apply a vendor profile or custom IRQ layout, disable NVMesh’s IRQ step with **`TCP_RX_SET_IRQ_AFFINITY="No"`**, or disable the whole script with **`TCP_SET_AFFINITY="No"`**, and keep **`TCP_RPS_MODE=donttouch`** unless you intend to change RPS from NVMesh.
 
 For RDMA-centric tuning (IRQ balance, NVIDIA tools, and related topics), see [CPU Interrupt Affinity and IRQ Balancing](#cpu-interrupt-affinity-and-irq-balancing). TCP/SIW-specific tuning complements that guidance when traffic uses SoftiWarp instead of or in addition to RoCE.
@@ -1577,7 +1604,7 @@ For yum with remote repositories, an account and password are needed. Create a y
 ```
 [NVMesh]
 name=NVMesh repository
-baseurl=https://[user]:[password]@acme.com/nvmesh-generic/3.4.0/el/8.6/x86_64/ gpgcheck=0
+baseurl=https://[user]:[password]@acme.com/nvmesh-generic/3.5.0/el/8.6/x86_64/ gpgcheck=0
 enabled=1
 ```
 
@@ -1597,10 +1624,10 @@ Create an apt repository configuration file, such as `/etc/apt/sources.list.d/nv
 
 ```bash
 #### Create the repository configuration file
-echo 'deb [arch=amd64] https://urm.acme.com/artifactory/nvmesh-generic-local/3.4.0/ub/24.04/x86_64 noble main' | sudo tee /etc/apt/sources.list.d/nvmesh.list
+echo 'deb [arch=amd64] https://urm.acme.com/artifactory/nvmesh-generic-local/3.5.0/ub/24.04/x86_64 noble main' | sudo tee /etc/apt/sources.list.d/nvmesh.list
 
 #### If a GPG key is needed then this command should obtain it. The key is NOT uploaded by default for every version
-wget -O - https://<USER>:<PASSWORD>@urm.acme.com/artifactory/nvmesh-generic-local/3.4.0/ub/24.04/x86_64/conf/nvmesh.gpg.key | sudo apt-key add -
+wget -O - https://<USER>:<PASSWORD>@urm.acme.com/artifactory/nvmesh-generic-local/3.5.0/ub/24.04/x86_64/conf/nvmesh.gpg.key | sudo apt-key add -
 ```
 
 To fetch the latest changes from the apt repo and verify that NVMesh is available, use:
@@ -1811,41 +1838,41 @@ A typical highly availability NVMesh management setup will comprise 3 or 5 serve
 
 **<u>Note:</u>** Previous versions of NVMesh required various versions of MongoDB. If upgrading NVMesh, upgrading MongoDB may also be required. It is often required to update MongoDB in steps, e.g., first upgrade from Mongo 3.6 to Mongo 4.0 and then continue to upgrade to 4.2. Consult Mongo literature as needed.
 
-This version of NVMesh is compatible with Mongo versions 5.0 – 7.0. It is recommended to install MongoDB 7.0.
+This version of NVMesh is compatible with Mongo versions 5.0 – 8.0. It is recommended to install MongoDB 8.0 for new deployments when packages are available for the selected operating system. MongoDB 7.0 remains supported.
 
-Detailed instructions for installing MongoDB 7.0 can be found [here](https://www.mongodb.com/docs/v7.0/tutorial/install-mongodb-on-red-hat/) for RedHat-compatible and [here](https://www.mongodb.com/docs/v7.0/tutorial/install-mongodb-on-ubuntu/) for Ubuntu.
+Detailed instructions for installing MongoDB 8.0 can be found [here](https://www.mongodb.com/docs/v8.0/tutorial/install-mongodb-on-red-hat/) for RedHat-compatible and [here](https://www.mongodb.com/docs/v8.0/tutorial/install-mongodb-on-ubuntu/) for Ubuntu. If MongoDB 8.0 packages are not available for the selected operating system, use MongoDB 7.0 packages instead.
 
-For Redhat 8.x, create /etc/yum.repos.d/mongodb-org-7.0.repo with the following contents:
+For Redhat 8.x, create /etc/yum.repos.d/mongodb-org-8.0.repo with the following contents:
 
 ```
-[mongodb-org-7.0]
+[mongodb-org-8.0]
 name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/7.0/x86_64/
+baseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/8.0/x86_64/
 gpgcheck=1
 enabled=1
-gpgkey=https://pgp.mongodb.com/server-7.0.asc |
+gpgkey=https://pgp.mongodb.com/server-8.0.asc
 ```
 
 For Redhat 9.x use:
 
 ```
-[mongodb-org-7.0]
+[mongodb-org-8.0]
 name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/7.0/x86_64/
+baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
 gpgcheck=1
 enabled=1
-gpgkey=https://pgp.mongodb.com/server-7.0.asc
+gpgkey=https://pgp.mongodb.com/server-8.0.asc
 ```
 
-For Rocky Linux 10.x, no MongoDB 7.0 repo for RHEL 10 is available yet. Use the RHEL 9 repo as a workaround. MongoDB 7.0 requires AVX CPU support.
+For Rocky Linux 10.x, no MongoDB 8.0 repo for RHEL 10 is available yet. Use the RHEL 9 repo as a workaround. MongoDB 8.0 requires AVX CPU support.
 
 ```
-[mongodb-org-7.0]
+[mongodb-org-8.0]
 name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/7.0/x86_64/
+baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
 gpgcheck=0
 enabled=1
-gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
+gpgkey=https://www.mongodb.org/static/pgp/server-8.0.asc
 ```
 
 Then run the following command unless a specific subversion is needed:
@@ -1859,15 +1886,15 @@ For Ubuntu 20.04 and 22.04, perform the following steps:
 ```bash
 ### Import the public key
 sudo apt-get install gnupg curl
-curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-  sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
+curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+  sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg \
   --dearmor
 
 ### Create the apt source, for Ubuntu 22.04
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
 ### Create the apt source, for Ubuntu 20.04
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
 ### Reload the package database
 sudo apt-get update
@@ -1876,7 +1903,7 @@ sudo apt-get update
 sudo apt-get install -y mongodb-org-server mongodb-org-mongos mongodb-org mongodb-org-tools
 ```
 
-**<u>Note:</u>** Mongo 7.0 is not available for Ubuntu 24.04.
+**<u>Note:</u>** If MongoDB 8.0 packages are not available for a specific Ubuntu release, use a supported MongoDB 7.0 package set for that operating system.
 
 After installation, check whether the service started cleanly and verify that it is listening on tcp/27017, as follows:
 
@@ -1967,28 +1994,19 @@ apt-get install -y nodejs
 
 Kafka must be installed on one or more servers, as it is used for communication between NVMesh management and other components. It is recommended to use at least 3 Kafka servers to ensure high availability. Typically, a Kafka server instance is co-installed with every management instance and Mongo instance, but this is not strictly warranted.
 
-JDK is a pre-requisite for installing a Kafka server.
+JDK is a prerequisite for installing a Kafka server. Kafka 4.1.1 requires Java 17 or newer.
 
-For RHEL 8.x / Rocky 8.x compatible, perform the following or similar to install a JDK:
-
-Option 1: Minimal JDK without monitoring tools
+For RHEL 8.x / Rocky 8.x compatible, perform the following or similar to install Java 17:
 
 ```bash
-yum -y install java-1.8.0-openjdk
+yum -y install java-17-openjdk-headless
 ```
 
-Option 2: Use a more complete JDK for monitoring tools as well
+For Rocky Linux 10.x, install Java 17 using the available package variant:
 
 ```bash
-yum -y install java-1.8.0-openjdk-devel
-```
-
-For Rocky Linux 10.x, `java-1.8.0-openjdk` is not available. Install a newer JDK with version fallback:
-
-```bash
-yum install -y java-21-openjdk-headless \
-  || yum install -y java-21-openjdk \
-  || yum install -y java-17-openjdk-headless
+yum install -y java-17-openjdk-headless \
+  || yum install -y java-17-openjdk
 ```
 
 Set `JAVA_HOME` so Kafka can locate the JDK:
@@ -2002,7 +2020,7 @@ source /etc/profile.d/java.sh
 For Ubuntu, perform the following:
 
 ```bash
-apt-get install -y default-jdk
+apt-get install -y openjdk-17-jre-headless
 ```
 
 Next, download Kafka as tar/gz file, as unfortunately there is no commonly used RPM packaging, as follows:
@@ -2011,20 +2029,20 @@ Download the package, e.g., to /tmp
 
 ```bash
 cd /tmp
-wget https://archive.apache.org/dist/kafka/3.7.0/kafka_2.13-3.7.0.tgz
+wget https://downloads.apache.org/kafka/4.1.1/kafka_2.13-4.1.1.tgz
 ```
 
 Extract the package to /opt
 
 ```bash
 cd /opt
-tar xf /tmp/kafka_2.13-3.7.0.tgz
+tar xf /tmp/kafka_2.13-4.1.1.tgz
 ```
 
 Link the specific version to the generic directory
 
 ```bash
-ln -s /opt/kafka_2.13-3.7.0 /opt/kafka
+ln -s /opt/kafka_2.13-4.1.1 /opt/kafka
 ```
 
 Setup a system-d service for Kafka by generating a file named `/etc/systemd/system/kafka.service` with the following contents:
@@ -2033,7 +2051,7 @@ Setup a system-d service for Kafka by generating a file named `/etc/systemd/syst
 [root@nvme243 15:59:11 root]# systemctl cat kafka
 # /etc/systemd/system/kafka.service
 [Unit]
-Description=Apache Kafka server (broker)
+Description=Apache Kafka server (KRaft broker + controller)
 Documentation=http://kafka.apache.org/documentation.html
 Requires=network.target remote-fs.target
 After=network.target remote-fs.target
@@ -2041,7 +2059,7 @@ After=network.target remote-fs.target
 [Service]
 Type=simple
 Environment="LOG_DIR=/var/log/kafka"
-ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft/server.properties
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
 ExecStop=/opt/kafka/bin/kafka-server-stop.sh
 
 [Install]
@@ -2053,7 +2071,7 @@ Configure the Kafka nodes by modifying `/opt/kafka/config/server.properties` and
 ```
 process.roles=broker,controller
 controller.listener.names=CONTROLLER
-log.dirs=/var/lib/kafka
+log.dirs=/var/lib/kafka/data
 log.retention.ms=-1
 log.retention.minutes=-1
 log.retention.hours=-1
@@ -2079,7 +2097,7 @@ super.users=User:Kafka;User:Management
 ssl.principal.mapping.rules=RULE:.*OU=([a-zA-Z.0-9@-]+).*$/$1/,DEFAULT
 ```
 
-SSL should also be used for the Kafka-RAFT protocol between them by placing the following or similar in `/opt/kafka/config/kraft/management.properties`:
+SSL should also be used for the Kafka-RAFT protocol between them by placing the following or similar in `/opt/kafka/config/server.properties`:
 
 ```
 ssl.keystore.location=/etc/nvmesh.tls/Management.jks
@@ -2099,13 +2117,13 @@ echo $KAFKA_CLUSTER_ID #### will print out the new uuid
 
 #### Insert this UUID to all nodes in the cluster
 KAFKA_CLUSTER_ID="your_cluster_id"
-bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/kraft/server.properties
+bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server.properties
 ```
 
 Make final preparations for the node, as follows:
 
 ```bash
-mkdir -p /var/lib/kafka/
+mkdir -p /var/lib/kafka/data /var/log/kafka
 systemctl enable kafka
 ```
 
@@ -2856,6 +2874,10 @@ VPGs comprise the following fields:
 | Allocate on Offline Hardware | When turned on, then the volume may be allocated on drives that are currently offline or missing. |
 | Encrypted Volume | When turned on, the volume will be automatically encrypted using dm-crypt integration on the clients where the volume is attached. |
 
+VPG reserved space can be extended when additional capacity must be set aside. Starting with NVMesh 3.5.0, reserved space can also be reduced by using the Reclaim action on a VPG. Reclaim removes unused reserved space and reduces the VPG reservation to the effective capacity currently consumed by volumes derived from that VPG. If no derived volumes consume reserved capacity, the reserved-space volume is removed and the VPG reserved capacity is set to 0. Reclaim is available for non-default VPGs that have reserved capacity and unused reserved space. If the reserved space is already fully allocated, there is no unused capacity to reclaim. New allocations from the VPG are blocked while reclaim is in progress.
+
+The VPG view shows the amount of allocated reserved space so that administrators can compare the current reservation with the capacity actually consumed by derived volumes before running Reclaim.
+
 Following is a screenshot of the VPG creation screen that should be filled it out using the information from the table above. VPG management is found under the Settings tab as Provisioning Groups.
 
 <div align="center"><img src="./ug-media/image33.png" style="width:7.24306in;height:7.51042in"
@@ -2871,7 +2893,7 @@ For convenience, NVMesh includes default VPGs to assist in volume creation as de
 | DEFAULT_RAID_10_VPG | For generating striped and mirrored RAID-10 volumes with a stripe width of 2. |
 | DEFAULT_EC_DUAL_TARGET_REDUNDANCY_VPG | For generating 8+2 erasure coded volumes with full separation. <br>For such volumes, drive space will be required from at least 10 targets. |
 | DEFAULT_EC_SINGLE_TARGET_REDUNDANCY_VPG | For generating 8+2 erasure coded volumes with minimal separation. <br>For such volumes, drive space will be required from at least 10 drives spread across at least 5 targets. |
-| DEFAULT_STRIPED_EC_DUAL_TARGET_REDUNDANCY_VPG | For generating 8+2 striped and erasure coded volumes with full separation with a stripe width of 2. <br>For such volumes, drive space will be required from at least 20 drives spread across at least 10 targets. <br>**Note: This functionality is not production grade in this version. <br> This should not be used!** |
+| DEFAULT_STRIPED_EC_DUAL_TARGET_REDUNDANCY_VPG | For generating 8+2 striped erasure-coded (RAID-60) volumes with full separation and a stripe width of 2. <br>For such volumes, drive space will be required from at least 20 drives spread across at least 10 targets. |
 | DEFAULT_METADATA_RAID_1_VPG | Obsolete, will be removed in an upcoming release. <br>**This should not be used!** |
 
 ## Protection Domains
@@ -3159,7 +3181,7 @@ The following tables defines the TOMA configuration parameters defined using `to
 
 **Note:** This feature should be considered alpha.
 
-Data scrubbing is a background process that periodically reads volume data, validates it across redundant copies, and repairs any detected problems such as bad sectors. RAID-0 and JBOD volumes are not scrubbed, as they have no redundancy to validate or recover from.
+Data scrubbing is a background process that periodically reads volume data, validates it across redundant copies, and repairs any detected problems such as bad sectors. RAID-0 and Concatenated volumes are not scrubbed, as they have no redundancy to validate or recover from.
 
 Each TOMA independently scrubs its local segments. Scrubbing is only performed on healthy, non-degraded volumes. The process works as follows:
 
@@ -3742,7 +3764,7 @@ Logs sent to binary tracing of levels `INFO`, `WARNING` or `ERROR` are also sent
 
 All binary traces are kept in memory and occasionally dumped to persistent storage. By default, more granular logs of lower severity than info-level logs, often called "trace-level logs" are also stored using this mechanism.
 
-The following module params control tracing levels related to code within that module. Each trace is controlled by a single module parameter. See [NVMesh Module Params](https://github.com/NVIDIA/nvmesh-documentation/blob/3.4.0/NVMesh%203.4.0%20Module%20Params.md) for more details. Traces with a severity level higher than the relevant module param will not be emitted to the tracer.
+The following module params control tracing levels related to code within that module. Each trace is controlled by a single module parameter. See [NVMesh Module Params](https://github.com/NVIDIA/nvmesh-documentation/blob/3.5.0/NVMesh%203.5.0%20Module%20Params.md) for more details. Traces with a severity level higher than the relevant module param will not be emitted to the tracer.
 
 | Module | Parameter | Comments |
 | --- | --- | --- |
@@ -4404,6 +4426,18 @@ Evicted drives cannot be deleted, like any other drive, until all allocated spac
 
 The same functionality is also available from the Drives section.
 
+#### Reinstating a Drive
+
+Starting with NVMesh 3.5.0, a previously evicted drive can be reinstated after the underlying problem has been resolved. Reinstating a drive returns it to service without requiring the drive to be deleted and rediscovered.
+
+Use this operation only after confirming that the drive and its target host are healthy. After the drive is reinstated, NVMesh evaluates the data on the drive and brings the drive back into normal allocation and rebuild workflows as needed.
+
+To reinstate a drive:
+
+1. In the NVMesh GUI, go to the **Drives** page.
+1. Select the evicted drive.
+1. Click **Reinstate** and confirm the operation.
+
 #### Volume Rebuild
 
 Any protected volumes that have space allocated on an evicted drive and no other issues, will have a status of "Rebuild Required". In the Volumes section, such volumes can be located by entering "Rebuild" in the Status filter box. To rebuild one or more volumes, use the volume table’s multi-choose functionality and click on the Rebuild button in the top-left corner. A pop-up window will prompt for a password reflecting the sensitivity of this operation. Enter the password to proceed and the rebuild process will be invoked.
@@ -4734,7 +4768,6 @@ The following sections describe various system limits. Some of these may be appr
 | Min volume size | 1 GB |
 | Max volume size | Limited by cluster capacity |
 | Max clients connected to a single volume | 1024 |
-| Max volumes attached  to a single client | 1024, **<u>Note:</u>** Unrelated to NVMesh, attaching too many volumes (seen via `lsblk`) might strain the machine due to various internal linux monitoring utilities, nfs, etc |
 |  |  |
 | Volume Provisioning Group Limitations |  |
 | Name | 1024 Unicode characters |
